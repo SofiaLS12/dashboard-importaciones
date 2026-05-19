@@ -326,46 +326,53 @@
 
 <main>
   <div class="kpis" id="kpis">
-    <div class="kpi purple"><div class="kpi-label">Total registros</div><div class="kpi-value">—</div></div>
-    <div class="kpi teal"><div class="kpi-label">Analistas</div><div class="kpi-value">—</div></div>
-    <div class="kpi amber"><div class="kpi-label">Con arribo</div><div class="kpi-value">—</div></div>
-    <div class="kpi red"><div class="kpi-label">Pendientes salida</div><div class="kpi-value">—</div></div>
+    <div class="kpi purple"><div class="kpi-label">Total Facturas</div><div class="kpi-value" id="kpi-facturas">—</div></div>
+    <div class="kpi teal"><div class="kpi-label">Total SOs</div><div class="kpi-value" id="kpi-sos">—</div></div>
+    <div class="kpi amber"><div class="kpi-label">Cantidad de Analistas</div><div class="kpi-value" id="kpi-analistas">3</div></div>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+    <label style="font-size:13px; color:var(--text2);">Filtrar por mes:</label>
+    <select id="filtroMes" onchange="aplicarFiltros()" style="font-family:var(--font); font-size:13px; background:var(--surface2); border:0.5px solid var(--border2); border-radius:8px; color:var(--text); padding:8px 14px; outline:none; cursor:pointer;">
+      <option value="">Todos los meses</option>
+    </select>
   </div>
 
   <div class="charts">
     <div class="card">
-      <div class="card-title">FCLs por analista</div>
+      <div class="card-title">Facturas por analista</div>
       <div style="position:relative; height:240px;">
-        <canvas id="chartAnalista" role="img" aria-label="FCLs por analista responsable">Cargando...</canvas>
+        <canvas id="chartFacturas" role="img" aria-label="Cantidad de facturas por analista">Cargando...</canvas>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">Status QC Comex</div>
+      <div class="card-title">SOs por analista</div>
       <div style="position:relative; height:240px;">
-        <canvas id="chartStatus" role="img" aria-label="Registros por status QC Comex">Cargando...</canvas>
+        <canvas id="chartSOs" role="img" aria-label="Cantidad de SOs por analista">Cargando...</canvas>
       </div>
     </div>
   </div>
 
   <div class="card">
     <div class="search-row">
-      <input type="text" id="filtro" placeholder="Buscar por importador, analista, FCL o status..." oninput="filtrarTabla()" />
+      <input type="text" id="filtro" placeholder="Buscar por analista, FCL, factura, banco, shipper..." oninput="filtrarTabla()" />
     </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Importador</th>
-            <th>N° FCL</th>
             <th>Analista</th>
-            <th>Arribo aduana</th>
-            <th>Salida aduana</th>
-            <th>Status QC Comex</th>
-            <th>Ok Analista</th>
+            <th>N° FCL</th>
+            <th>N° Factura</th>
+            <th>ETA (Arribo Aduana)</th>
+            <th>Depósito</th>
+            <th>FOB SIMI Total</th>
+            <th>Banco Asignado</th>
+            <th>Shipper</th>
           </tr>
         </thead>
         <tbody id="tbody">
-          <tr class="loading-row"><td colspan="7">Cargando datos...</td></tr>
+          <tr class="loading-row"><td colspan="8">Cargando datos...</td></tr>
         </tbody>
       </table>
     </div>
@@ -376,100 +383,179 @@
 <script>
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=1136888913&single=true&output=csv';
 
+const ANALISTAS = ['Luciana', 'Florencia', 'Aymara'];
+
 const COLS = {
-  importador: 'Importador',
+  responsable: 'Responsable Commercial Invoice',
   fcl: 'N° FCL',
-  analista: 'Analista Responsable',
+  invoice: 'N° Invoice',
   arribo: 'Fecha de arribo a Aduana',
-  salida: 'Fecha de Salida de Aduana',
-  statusQC: 'Status QC Comex',
-  okAnalista: '¿Ok Analista?'
+  deposito: 'Deposito ZFLP',
+  fobTotal: 'FOB SIMI TOTAL',
+  banco: 'Banco Asignado',
+  shipper: 'Shipper',
+  so: 'ID Stock Origen'
 };
 
 let todosLosDatos = [];
-let chartAnalista = null;
-let chartStatus = null;
+let chartFacturas = null;
+let chartSOs = null;
 
-function renderKPIs(datos) {
-  const total = datos.length;
-  const analistas = new Set(datos.map(r => r[COLS.analista]).filter(Boolean)).size;
-  const conArribo = datos.filter(r => r[COLS.arribo]).length;
-  const pendientes = datos.filter(r => !r[COLS.salida] && r[COLS.arribo]).length;
-  const vals = [total.toLocaleString(), analistas, conArribo.toLocaleString(), pendientes.toLocaleString()];
-  document.querySelectorAll('.kpi-value').forEach((el, i) => el.textContent = vals[i]);
+function parseFecha(str) {
+  if (!str) return null;
+  const parts = str.split('/');
+  if (parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]);
+  return new Date(str);
 }
 
-function renderChartAnalista(datos) {
-  const conteo = {};
-  datos.forEach(r => { const a = r[COLS.analista] || 'Sin asignar'; conteo[a] = (conteo[a]||0)+1; });
-  const sorted = Object.entries(conteo).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  if (chartAnalista) chartAnalista.destroy();
-  chartAnalista = new Chart(document.getElementById('chartAnalista'), {
-    type: 'bar',
-    data: {
-      labels: sorted.map(e=>e[0]),
-      datasets: [{ data: sorted.map(e=>e[1]), backgroundColor: 'rgba(124,111,247,0.7)', borderRadius: 4 }]
-    },
-    options: {
-      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-        y: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { display: false } }
-      }
-    }
+function poblarFiltroMes(datos) {
+  const meses = new Set();
+  datos.forEach(r => {
+    const f = parseFecha(r[COLS.arribo]);
+    if (f && !isNaN(f)) meses.add(`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`);
+  });
+  const select = document.getElementById('filtroMes');
+  const current = select.value;
+  select.innerHTML = '<option value="">Todos los meses</option>';
+  [...meses].sort().reverse().forEach(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(y, mo-1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    select.innerHTML += `<option value="${m}" ${current===m?'selected':''}>${label.charAt(0).toUpperCase()+label.slice(1)}</option>`;
   });
 }
 
-function renderChartStatus(datos) {
+function filtrarPorMes(datos) {
+  const mes = document.getElementById('filtroMes').value;
+  if (!mes) return datos;
+  const [y, mo] = mes.split('-').map(Number);
+  return datos.filter(r => {
+    const f = parseFecha(r[COLS.arribo]);
+    return f && f.getFullYear() === y && f.getMonth()+1 === mo;
+  });
+}
+
+function getAnalista(r) {
+  const resp = (r[COLS.responsable] || '').trim();
+  return ANALISTAS.find(a => resp.toLowerCase().includes(a.toLowerCase())) || null;
+}
+
+// Agrupa filas por FCL, suma FOB, toma primer valor de otros campos
+function agruparPorFCL(datos) {
+  const mapa = {};
+  datos.forEach(r => {
+    const fcl = (r[COLS.fcl] || '').trim();
+    if (!fcl) return;
+    if (!mapa[fcl]) {
+      mapa[fcl] = {
+        analista: r[COLS.responsable] || '-',
+        fcl,
+        invoice: r[COLS.invoice] || '-',
+        arribo: r[COLS.arribo] || '-',
+        deposito: r[COLS.deposito] || '-',
+        fobTotal: 0,
+        banco: r[COLS.banco] || '-',
+        shipper: r[COLS.shipper] || '-'
+      };
+    }
+    const fob = parseFloat((r[COLS.fobTotal] || '0').toString().replace(/[^0-9.-]/g, ''));
+    if (!isNaN(fob)) mapa[fcl].fobTotal += fob;
+  });
+  return Object.values(mapa);
+}
+
+function aplicarFiltros() {
+  const datos = filtrarPorMes(todosLosDatos);
+  renderKPIs(datos);
+  renderChartFacturas(datos);
+  renderChartSOs(datos);
+  renderTabla(datos);
+}
+
+function renderKPIs(datos) {
+  const facturas = new Set(datos.map(r => r[COLS.invoice]).filter(Boolean)).size;
+  const sos = new Set(datos.map(r => r[COLS.so]).filter(Boolean)).size;
+  document.getElementById('kpi-facturas').textContent = facturas.toLocaleString();
+  document.getElementById('kpi-sos').textContent = sos.toLocaleString();
+}
+
+function renderChartFacturas(datos) {
   const conteo = {};
-  datos.forEach(r => { const s = r[COLS.statusQC] || 'Sin status'; conteo[s] = (conteo[s]||0)+1; });
-  const sorted = Object.entries(conteo).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const colors = ['#7c6ff7','#2dd4b0','#f5a623','#f06060','#378ADD','#D4537E','#639922','#888780'];
-  if (chartStatus) chartStatus.destroy();
-  chartStatus = new Chart(document.getElementById('chartStatus'), {
+  ANALISTAS.forEach(a => conteo[a] = new Set());
+  datos.forEach(r => {
+    const a = getAnalista(r);
+    if (a && r[COLS.invoice]) conteo[a].add(r[COLS.invoice]);
+  });
+  if (chartFacturas) chartFacturas.destroy();
+  chartFacturas = new Chart(document.getElementById('chartFacturas'), {
     type: 'bar',
     data: {
-      labels: sorted.map(e=>e[0]),
-      datasets: [{ data: sorted.map(e=>e[1]), backgroundColor: colors.slice(0,sorted.length), borderRadius: 4 }]
+      labels: ANALISTAS,
+      datasets: [{ data: ANALISTAS.map(a => conteo[a].size), backgroundColor: ['rgba(124,111,247,0.85)','rgba(124,111,247,0.65)','rgba(124,111,247,0.45)'], borderRadius: 6 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 10 }, maxRotation: 35 }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+        x: { ticks: { color: '#8a8f9a', font: { size: 13, weight: '500' } }, grid: { display: false } },
+        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
       }
+    }
+  });
+}
+
+function renderChartSOs(datos) {
+  const conteo = {};
+  ANALISTAS.forEach(a => conteo[a] = new Set());
+  datos.forEach(r => {
+    const a = getAnalista(r);
+    if (a && r[COLS.so]) conteo[a].add(r[COLS.so]);
+  });
+  if (chartSOs) chartSOs.destroy();
+  chartSOs = new Chart(document.getElementById('chartSOs'), {
+    type: 'doughnut',
+    data: {
+      labels: ANALISTAS,
+      datasets: [{ data: ANALISTAS.map(a => conteo[a].size), backgroundColor: ['rgba(45,212,176,0.9)','rgba(45,212,176,0.6)','rgba(45,212,176,0.35)'], borderColor: '#16181c', borderWidth: 3 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } }
+      },
+      cutout: '65%'
     }
   });
 }
 
 function renderTabla(datos) {
   const tbody = document.getElementById('tbody');
-  if (!datos.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="7">Sin resultados</td></tr>'; return; }
-  tbody.innerHTML = datos.slice(0,300).map(r => {
-    const ok = (r[COLS.okAnalista]||'').toLowerCase();
-    const badgeClass = ok === 'si' || ok === 'sí' ? 'ok' : ok ? 'pendiente' : '';
+  if (!datos.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="8">Sin resultados</td></tr>'; return; }
+  const filas = agruparPorFCL(datos);
+  tbody.innerHTML = filas.slice(0,300).map(r => {
+    const fob = r.fobTotal > 0 ? `$ ${r.fobTotal.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}` : '-';
     return `<tr>
-      <td class="primary">${r[COLS.importador]||'-'}</td>
-      <td style="font-family:var(--mono); color:var(--text);">${r[COLS.fcl]||'-'}</td>
-      <td>${r[COLS.analista]||'-'}</td>
-      <td>${r[COLS.arribo]||'-'}</td>
-      <td>${r[COLS.salida]||'-'}</td>
-      <td><span class="badge">${r[COLS.statusQC]||'-'}</span></td>
-      <td><span class="badge ${badgeClass}">${r[COLS.okAnalista]||'-'}</span></td>
+      <td class="primary">${r.analista}</td>
+      <td style="font-family:var(--mono); color:var(--text);">${r.fcl}</td>
+      <td>${r.invoice}</td>
+      <td>${r.arribo}</td>
+      <td>${r.deposito}</td>
+      <td style="font-family:var(--mono); color:var(--teal);">${fob}</td>
+      <td>${r.banco}</td>
+      <td>${r.shipper}</td>
     </tr>`;
   }).join('');
-  document.getElementById('conteo').textContent = `Mostrando ${Math.min(datos.length,300)} de ${datos.length} registros`;
+  document.getElementById('conteo').textContent = `Mostrando ${Math.min(filas.length,300)} de ${filas.length} FCLs`;
 }
 
 function filtrarTabla() {
   const q = document.getElementById('filtro').value.toLowerCase();
-  const filtrados = todosLosDatos.filter(r =>
-    (r[COLS.importador]||'').toLowerCase().includes(q) ||
-    (r[COLS.analista]||'').toLowerCase().includes(q) ||
+  const base = filtrarPorMes(todosLosDatos);
+  const filtrados = base.filter(r =>
+    (r[COLS.responsable]||'').toLowerCase().includes(q) ||
     (r[COLS.fcl]||'').toLowerCase().includes(q) ||
-    (r[COLS.statusQC]||'').toLowerCase().includes(q)
+    (r[COLS.invoice]||'').toLowerCase().includes(q) ||
+    (r[COLS.banco]||'').toLowerCase().includes(q) ||
+    (r[COLS.shipper]||'').toLowerCase().includes(q)
   );
   renderTabla(filtrados);
 }
@@ -477,21 +563,19 @@ function filtrarTabla() {
 function cargarDatos() {
   const btn = document.getElementById('btnActualizar');
   btn.classList.add('loading');
-  document.getElementById('tbody').innerHTML = '<tr class="loading-row"><td colspan="7">Cargando datos...</td></tr>';
+  document.getElementById('tbody').innerHTML = '<tr class="loading-row"><td colspan="8">Cargando datos...</td></tr>';
   Papa.parse(CSV_URL, {
     download: true, header: true, skipEmptyLines: true,
     complete(results) {
       todosLosDatos = results.data;
-      renderKPIs(todosLosDatos);
-      renderChartAnalista(todosLosDatos);
-      renderChartStatus(todosLosDatos);
-      renderTabla(todosLosDatos);
+      poblarFiltroMes(todosLosDatos);
+      aplicarFiltros();
       const now = new Date();
       document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${now.toLocaleTimeString('es-AR')}`;
       btn.classList.remove('loading');
     },
     error() {
-      document.getElementById('tbody').innerHTML = '<tr><td colspan="7" class="error-msg">No se pudieron cargar los datos.</td></tr>';
+      document.getElementById('tbody').innerHTML = '<tr><td colspan="8" class="error-msg">No se pudieron cargar los datos.</td></tr>';
       btn.classList.remove('loading');
     }
   });
@@ -499,5 +583,6 @@ function cargarDatos() {
 
 cargarDatos();
 </script>
+
 </body>
 </html>
