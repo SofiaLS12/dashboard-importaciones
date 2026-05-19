@@ -457,14 +457,37 @@ function agruparPorFCL(datos) {
         shipper: r[COLS.shipper] || '-'
       };
     }
-    const fob = parseFloat((r[COLS.fobTotal] || '0').toString().replace(/[^0-9.-]/g, ''));
+    let fobStr = (r[COLS.fobTotal] || '0').toString().trim();
+    // Eliminar símbolos de moneda y espacios
+    fobStr = fobStr.replace(/[^0-9.,-]/g, '');
+    // Si tiene coma y punto, asumir que coma es separador de miles
+    if (fobStr.includes(',') && fobStr.includes('.')) {
+      fobStr = fobStr.replace(/,/g, '');
+    } else if (fobStr.includes(',')) {
+      // Si solo tiene coma, puede ser decimal (estilo europeo) o miles
+      const partes = fobStr.split(',');
+      if (partes[partes.length-1].length === 2 || partes[partes.length-1].length === 3 && partes.length === 2) {
+        fobStr = fobStr.replace(',', '.');
+      } else {
+        fobStr = fobStr.replace(/,/g, '');
+      }
+    }
+    const fob = parseFloat(fobStr);
     if (!isNaN(fob)) mapa[fcl].fobTotal += fob;
   });
   return Object.values(mapa);
 }
 
+function debugFOB(datos) {
+  console.log('=== DEBUG FOB SIMI TOTAL (primeros 5 valores) ===');
+  datos.slice(0,5).forEach((r,i) => {
+    console.log(`Fila ${i+1} | FCL: "${r[COLS.fcl]}" | FOB raw: "${r[COLS.fobTotal]}"`);
+  });
+}
+
 function aplicarFiltros() {
   const datos = filtrarPorMes(todosLosDatos);
+  debugFOB(datos);
   renderKPIs(datos);
   renderChartFacturas(datos);
   renderChartSOs(datos);
