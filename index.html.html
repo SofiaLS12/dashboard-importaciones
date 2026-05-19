@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Estado de Importaciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0f11;
+    --surface: #16181c;
+    --surface2: #1e2026;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f0;
+    --text2: #8a8f9a;
+    --text3: #555a66;
+    --purple: #7c6ff7;
+    --purple-soft: rgba(124,111,247,0.15);
+    --teal: #2dd4b0;
+    --teal-soft: rgba(45,212,176,0.15);
+    --amber: #f5a623;
+    --amber-soft: rgba(245,166,35,0.12);
+    --red: #f06060;
+    --red-soft: rgba(240,96,96,0.12);
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border2);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--purple-soft);
+    border: 0.5px solid var(--purple);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-icon svg { width: 16px; height: 16px; stroke: var(--purple); fill: none; stroke-width: 2; }
+
+  .logo-text {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .logo-sub {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 1px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .last-update {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  .btn {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 0.5px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
+  .btn.loading { opacity: 0.5; pointer-events: none; }
+
+  .btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .kpi {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .kpi.purple::before { background: var(--purple); }
+  .kpi.teal::before { background: var(--teal); }
+  .kpi.amber::before { background: var(--amber); }
+  .kpi.red::before { background: var(--red); }
+
+  .kpi-label {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .kpi.purple .kpi-value { color: var(--purple); }
+  .kpi.teal .kpi-value { color: var(--teal); }
+  .kpi.amber .kpi-value { color: var(--amber); }
+  .kpi.red .kpi-value { color: var(--red); }
+
+  .charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 768px) {
+    .charts { grid-template-columns: 1fr; }
+    main { padding: 20px 16px; }
+    header { padding: 16px; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .search-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  input[type="text"] {
+    font-family: var(--font);
+    font-size: 13px;
+    background: var(--surface2);
+    border: 0.5px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 14px;
+    flex: 1;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]::placeholder { color: var(--text3); }
+  input[type="text"]:focus { border-color: var(--purple); }
+
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+
+  th {
+    text-align: left;
+    padding: 8px 10px;
+    color: var(--text3);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 0.5px solid var(--border2);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 9px 10px;
+    border-bottom: 0.5px solid var(--border);
+    color: var(--text2);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  td.primary { color: var(--text); font-weight: 500; }
+
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text2);
+    border: 0.5px solid var(--border);
+    font-family: var(--mono);
+  }
+
+  .badge.ok { background: var(--teal-soft); color: var(--teal); border-color: rgba(45,212,176,0.2); }
+  .badge.pendiente { background: var(--amber-soft); color: var(--amber); border-color: rgba(245,166,35,0.2); }
+
+  .conteo {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 10px;
+    font-family: var(--mono);
+  }
+
+  .error-msg {
+    text-align: center;
+    padding: 32px;
+    color: var(--red);
+    font-size: 13px;
+  }
+
+  .loading-row td {
+    text-align: center;
+    padding: 32px;
+    color: var(--text3);
+  }
+
+  .dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--teal);
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div>
+      <div class="logo-text">Importaciones</div>
+      <div class="logo-sub">Estado en tiempo real</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="last-update" id="lastUpdate"><span class="dot"></span>Cargando...</span>
+    <button class="btn" id="btnActualizar" onclick="cargarDatos()">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Actualizar
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="kpis" id="kpis">
+    <div class="kpi purple"><div class="kpi-label">Total registros</div><div class="kpi-value">—</div></div>
+    <div class="kpi teal"><div class="kpi-label">Analistas</div><div class="kpi-value">—</div></div>
+    <div class="kpi amber"><div class="kpi-label">Con arribo</div><div class="kpi-value">—</div></div>
+    <div class="kpi red"><div class="kpi-label">Pendientes salida</div><div class="kpi-value">—</div></div>
+  </div>
+
+  <div class="charts">
+    <div class="card">
+      <div class="card-title">FCLs por analista</div>
+      <div style="position:relative; height:240px;">
+        <canvas id="chartAnalista" role="img" aria-label="FCLs por analista responsable">Cargando...</canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Status QC Comex</div>
+      <div style="position:relative; height:240px;">
+        <canvas id="chartStatus" role="img" aria-label="Registros por status QC Comex">Cargando...</canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="search-row">
+      <input type="text" id="filtro" placeholder="Buscar por importador, analista, FCL o status..." oninput="filtrarTabla()" />
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Importador</th>
+            <th>N° FCL</th>
+            <th>Analista</th>
+            <th>Arribo aduana</th>
+            <th>Salida aduana</th>
+            <th>Status QC Comex</th>
+            <th>Ok Analista</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr class="loading-row"><td colspan="7">Cargando datos...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="conteo" id="conteo"></p>
+  </div>
+</main>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=1136888913&single=true&output=csv';
+
+const COLS = {
+  importador: 'Importador',
+  fcl: 'N° FCL',
+  analista: 'Analista Responsable',
+  arribo: 'Fecha de arribo a Aduana',
+  salida: 'Fecha de Salida de Aduana',
+  statusQC: 'Status QC Comex',
+  okAnalista: '¿Ok Analista?'
+};
+
+let todosLosDatos = [];
+let chartAnalista = null;
+let chartStatus = null;
+
+function renderKPIs(datos) {
+  const total = datos.length;
+  const analistas = new Set(datos.map(r => r[COLS.analista]).filter(Boolean)).size;
+  const conArribo = datos.filter(r => r[COLS.arribo]).length;
+  const pendientes = datos.filter(r => !r[COLS.salida] && r[COLS.arribo]).length;
+  const vals = [total.toLocaleString(), analistas, conArribo.toLocaleString(), pendientes.toLocaleString()];
+  document.querySelectorAll('.kpi-value').forEach((el, i) => el.textContent = vals[i]);
+}
+
+function renderChartAnalista(datos) {
+  const conteo = {};
+  datos.forEach(r => { const a = r[COLS.analista] || 'Sin asignar'; conteo[a] = (conteo[a]||0)+1; });
+  const sorted = Object.entries(conteo).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if (chartAnalista) chartAnalista.destroy();
+  chartAnalista = new Chart(document.getElementById('chartAnalista'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(e=>e[0]),
+      datasets: [{ data: sorted.map(e=>e[1]), backgroundColor: 'rgba(124,111,247,0.7)', borderRadius: 4 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderChartStatus(datos) {
+  const conteo = {};
+  datos.forEach(r => { const s = r[COLS.statusQC] || 'Sin status'; conteo[s] = (conteo[s]||0)+1; });
+  const sorted = Object.entries(conteo).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const colors = ['#7c6ff7','#2dd4b0','#f5a623','#f06060','#378ADD','#D4537E','#639922','#888780'];
+  if (chartStatus) chartStatus.destroy();
+  chartStatus = new Chart(document.getElementById('chartStatus'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(e=>e[0]),
+      datasets: [{ data: sorted.map(e=>e[1]), backgroundColor: colors.slice(0,sorted.length), borderRadius: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 10 }, maxRotation: 35 }, grid: { display: false } },
+        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+function renderTabla(datos) {
+  const tbody = document.getElementById('tbody');
+  if (!datos.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="7">Sin resultados</td></tr>'; return; }
+  tbody.innerHTML = datos.slice(0,300).map(r => {
+    const ok = (r[COLS.okAnalista]||'').toLowerCase();
+    const badgeClass = ok === 'si' || ok === 'sí' ? 'ok' : ok ? 'pendiente' : '';
+    return `<tr>
+      <td class="primary">${r[COLS.importador]||'-'}</td>
+      <td style="font-family:var(--mono); color:var(--text);">${r[COLS.fcl]||'-'}</td>
+      <td>${r[COLS.analista]||'-'}</td>
+      <td>${r[COLS.arribo]||'-'}</td>
+      <td>${r[COLS.salida]||'-'}</td>
+      <td><span class="badge">${r[COLS.statusQC]||'-'}</span></td>
+      <td><span class="badge ${badgeClass}">${r[COLS.okAnalista]||'-'}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('conteo').textContent = `Mostrando ${Math.min(datos.length,300)} de ${datos.length} registros`;
+}
+
+function filtrarTabla() {
+  const q = document.getElementById('filtro').value.toLowerCase();
+  const filtrados = todosLosDatos.filter(r =>
+    (r[COLS.importador]||'').toLowerCase().includes(q) ||
+    (r[COLS.analista]||'').toLowerCase().includes(q) ||
+    (r[COLS.fcl]||'').toLowerCase().includes(q) ||
+    (r[COLS.statusQC]||'').toLowerCase().includes(q)
+  );
+  renderTabla(filtrados);
+}
+
+function cargarDatos() {
+  const btn = document.getElementById('btnActualizar');
+  btn.classList.add('loading');
+  document.getElementById('tbody').innerHTML = '<tr class="loading-row"><td colspan="7">Cargando datos...</td></tr>';
+  Papa.parse(CSV_URL, {
+    download: true, header: true, skipEmptyLines: true,
+    complete(results) {
+      todosLosDatos = results.data;
+      renderKPIs(todosLosDatos);
+      renderChartAnalista(todosLosDatos);
+      renderChartStatus(todosLosDatos);
+      renderTabla(todosLosDatos);
+      const now = new Date();
+      document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${now.toLocaleTimeString('es-AR')}`;
+      btn.classList.remove('loading');
+    },
+    error() {
+      document.getElementById('tbody').innerHTML = '<tr><td colspan="7" class="error-msg">No se pudieron cargar los datos.</td></tr>';
+      btn.classList.remove('loading');
+    }
+  });
+}
+
+cargarDatos();
+</script>
+</body>
+</html>
