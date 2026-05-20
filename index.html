@@ -3,304 +3,126 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard — Estado de Importaciones</title>
+<title>Dashboard — Importaciones</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #0e0f11;
-    --surface: #16181c;
-    --surface2: #1e2026;
-    --border: rgba(255,255,255,0.07);
-    --border2: rgba(255,255,255,0.12);
-    --text: #f0f0f0;
-    --text2: #8a8f9a;
-    --text3: #555a66;
-    --purple: #7c6ff7;
-    --purple-soft: rgba(124,111,247,0.15);
-    --teal: #2dd4b0;
-    --teal-soft: rgba(45,212,176,0.15);
-    --amber: #f5a623;
-    --amber-soft: rgba(245,166,35,0.12);
-    --red: #f06060;
-    --red-soft: rgba(240,96,96,0.12);
-    --font: 'DM Sans', sans-serif;
-    --mono: 'DM Mono', monospace;
+    --bg: #0e0f11; --surface: #16181c; --surface2: #1e2026;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f0; --text2: #8a8f9a; --text3: #555a66;
+    --purple: #7c6ff7; --purple-soft: rgba(124,111,247,0.15);
+    --teal: #2dd4b0; --teal-soft: rgba(45,212,176,0.15);
+    --amber: #f5a623; --amber-soft: rgba(245,166,35,0.12);
+    --red: #f06060; --red-soft: rgba(240,96,96,0.12);
+    --blue: #378ADD; --blue-soft: rgba(55,138,221,0.12);
+    --green: #639922; --green-soft: rgba(99,153,34,0.12);
+    --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
   }
-
-  body {
-    font-family: var(--font);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 0;
-  }
-
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
   header {
-    background: var(--surface);
-    border-bottom: 0.5px solid var(--border2);
-    padding: 20px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    background: var(--surface); border-bottom: 0.5px solid var(--border2);
+    padding: 16px 32px; display: flex; align-items: center;
+    justify-content: space-between; position: sticky; top: 0; z-index: 10;
   }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
+  .logo { display: flex; align-items: center; gap: 12px; }
   .logo-icon {
-    width: 32px;
-    height: 32px;
-    background: var(--purple-soft);
-    border: 0.5px solid var(--purple);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 32px; height: 32px; background: var(--purple-soft);
+    border: 0.5px solid var(--purple); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
   }
-
   .logo-icon svg { width: 16px; height: 16px; stroke: var(--purple); fill: none; stroke-width: 2; }
-
-  .logo-text {
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-  }
-
-  .logo-sub {
-    font-size: 12px;
-    color: var(--text2);
-    margin-top: 1px;
-  }
-
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .last-update {
-    font-size: 12px;
-    color: var(--text3);
-    font-family: var(--mono);
-  }
-
+  .logo-text { font-size: 15px; font-weight: 500; letter-spacing: -0.02em; }
+  .logo-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .last-update { font-size: 12px; color: var(--text3); font-family: var(--mono); }
   .btn {
-    font-family: var(--font);
-    font-size: 13px;
-    font-weight: 500;
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 0.5px solid var(--border2);
-    background: var(--surface2);
-    color: var(--text);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.15s, border-color 0.15s;
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    padding: 8px 16px; border-radius: 8px; border: 0.5px solid var(--border2);
+    background: var(--surface2); color: var(--text); cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: background 0.15s;
   }
-
-  .btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
+  .btn:hover { background: rgba(255,255,255,0.06); }
   .btn.loading { opacity: 0.5; pointer-events: none; }
-
   .btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
 
+  /* TABS */
+  .tabs-nav {
+    background: var(--surface); border-bottom: 0.5px solid var(--border2);
+    padding: 0 32px; display: flex; gap: 4px;
+  }
+  .tab-btn {
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    padding: 12px 20px; border: none; background: none; color: var(--text2);
+    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -0.5px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--purple); border-bottom-color: var(--purple); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
   main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
-
-  .kpis {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
   .kpi {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: 12px;
-    padding: 18px 20px;
-    position: relative;
-    overflow: hidden;
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 16px 18px; position: relative; overflow: hidden;
   }
-
   .kpi::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    border-radius: 12px 12px 0 0;
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 2px; border-radius: 12px 12px 0 0;
   }
-
   .kpi.purple::before { background: var(--purple); }
   .kpi.teal::before { background: var(--teal); }
   .kpi.amber::before { background: var(--amber); }
   .kpi.red::before { background: var(--red); }
-
-  .kpi-label {
-    font-size: 12px;
-    color: var(--text2);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .kpi-value {
-    font-size: 28px;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 1;
-  }
-
+  .kpi.blue::before { background: var(--blue); }
+  .kpi.green::before { background: var(--green); }
+  .kpi-label { font-size: 11px; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3; }
+  .kpi-value { font-size: 24px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
   .kpi.purple .kpi-value { color: var(--purple); }
   .kpi.teal .kpi-value { color: var(--teal); }
   .kpi.amber .kpi-value { color: var(--amber); }
   .kpi.red .kpi-value { color: var(--red); }
+  .kpi.blue .kpi-value { color: var(--blue); }
+  .kpi.green .kpi-value { color: var(--green); }
 
-  .charts {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 24px;
+  .filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .filter-row label { font-size: 13px; color: var(--text2); white-space: nowrap; }
+  select {
+    font-family: var(--font); font-size: 13px; background: var(--surface2);
+    border: 0.5px solid var(--border2); border-radius: 8px; color: var(--text);
+    padding: 8px 14px; outline: none; cursor: pointer;
   }
-
-  @media (max-width: 768px) {
-    .charts { grid-template-columns: 1fr; }
-    main { padding: 20px 16px; }
-    header { padding: 16px; }
-  }
-
-  .card {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-  }
-
-  .card-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text2);
-    margin-bottom: 16px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .search-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  @media (max-width: 768px) { .charts { grid-template-columns: 1fr; } main { padding: 20px 16px; } header { padding: 16px; } .tabs-nav { padding: 0 16px; } }
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .search-row { display: flex; gap: 12px; margin-bottom: 12px; }
   input[type="text"] {
-    font-family: var(--font);
-    font-size: 13px;
-    background: var(--surface2);
-    border: 0.5px solid var(--border2);
-    border-radius: 8px;
-    color: var(--text);
-    padding: 8px 14px;
-    flex: 1;
-    outline: none;
-    transition: border-color 0.15s;
+    font-family: var(--font); font-size: 13px; background: var(--surface2);
+    border: 0.5px solid var(--border2); border-radius: 8px; color: var(--text);
+    padding: 8px 14px; flex: 1; outline: none; transition: border-color 0.15s;
   }
-
   input[type="text"]::placeholder { color: var(--text3); }
   input[type="text"]:focus { border-color: var(--purple); }
-
   .table-wrap { overflow-x: auto; }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12.5px;
-  }
-
-  th {
-    text-align: left;
-    padding: 8px 10px;
-    color: var(--text3);
-    font-weight: 500;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    border-bottom: 0.5px solid var(--border2);
-    white-space: nowrap;
-  }
-
-  td {
-    padding: 9px 10px;
-    border-bottom: 0.5px solid var(--border);
-    color: var(--text2);
-    max-width: 160px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; padding: 8px 10px; color: var(--text3); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 0.5px solid var(--border2); white-space: nowrap; }
+  td { padding: 9px 10px; border-bottom: 0.5px solid var(--border); color: var(--text2); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   td.primary { color: var(--text); font-weight: 500; }
-
   tr:hover td { background: rgba(255,255,255,0.02); }
-
-  .badge {
-    display: inline-block;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 6px;
-    background: var(--surface2);
-    color: var(--text2);
-    border: 0.5px solid var(--border);
-    font-family: var(--mono);
-  }
-
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border); font-family: var(--mono); }
   .badge.ok { background: var(--teal-soft); color: var(--teal); border-color: rgba(45,212,176,0.2); }
   .badge.pendiente { background: var(--amber-soft); color: var(--amber); border-color: rgba(245,166,35,0.2); }
-
-  .conteo {
-    font-size: 12px;
-    color: var(--text3);
-    margin-top: 10px;
-    font-family: var(--mono);
-  }
-
-  .error-msg {
-    text-align: center;
-    padding: 32px;
-    color: var(--red);
-    font-size: 13px;
-  }
-
-  .loading-row td {
-    text-align: center;
-    padding: 32px;
-    color: var(--text3);
-  }
-
-  .dot {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--teal);
-    margin-right: 6px;
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
+  .conteo { font-size: 12px; color: var(--text3); margin-top: 10px; font-family: var(--mono); }
+  .error-msg { text-align: center; padding: 32px; color: var(--red); font-size: 13px; }
+  .loading-row td { text-align: center; padding: 32px; color: var(--text3); }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); margin-right: 6px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 </style>
 </head>
 <body>
@@ -312,94 +134,105 @@
     </div>
     <div>
       <div class="logo-text">Importaciones</div>
-      <div class="logo-sub">Estado en tiempo real</div>
+      <div class="logo-sub">Dashboard en tiempo real</div>
     </div>
   </div>
   <div class="header-right">
     <span class="last-update" id="lastUpdate"><span class="dot"></span>Cargando...</span>
-    <button class="btn" id="btnActualizar" onclick="cargarDatos()">
+    <button class="btn" id="btnActualizar" onclick="actualizarTodo()">
       <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       Actualizar
     </button>
   </div>
 </header>
 
+<nav class="tabs-nav">
+  <button class="tab-btn active" onclick="cambiarTab('tab1', this)">Facturas de Importación</button>
+  <button class="tab-btn" onclick="cambiarTab('tab2', this)">Estrategia de Declaración Global</button>
+</nav>
+
 <main>
-  <div class="kpis" id="kpis">
-    <div class="kpi purple"><div class="kpi-label">Total Facturas</div><div class="kpi-value" id="kpi-facturas">—</div></div>
-    <div class="kpi teal"><div class="kpi-label">Total SOs</div><div class="kpi-value" id="kpi-sos">—</div></div>
-    <div class="kpi amber"><div class="kpi-label">Cantidad de Analistas</div><div class="kpi-value" id="kpi-analistas">3</div></div>
-  </div>
 
-  <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-    <label style="font-size:13px; color:var(--text2);">Filtrar por mes:</label>
-    <select id="filtroMes" onchange="aplicarFiltros()" style="font-family:var(--font); font-size:13px; background:var(--surface2); border:0.5px solid var(--border2); border-radius:8px; color:var(--text); padding:8px 14px; outline:none; cursor:pointer;">
-      <option value="">Todos los meses</option>
-    </select>
-  </div>
-
-  <div class="charts">
-    <div class="card">
-      <div class="card-title">Facturas por analista</div>
-      <div style="position:relative; height:240px;">
-        <canvas id="chartFacturas" role="img" aria-label="Cantidad de facturas por analista">Cargando...</canvas>
+  <!-- TAB 1 -->
+  <div id="tab1" class="tab-panel active">
+    <div class="kpis">
+      <div class="kpi purple"><div class="kpi-label">Total Facturas</div><div class="kpi-value" id="kpi-facturas">—</div></div>
+      <div class="kpi teal"><div class="kpi-label">Total SOs</div><div class="kpi-value" id="kpi-sos">—</div></div>
+      <div class="kpi amber"><div class="kpi-label">Cantidad de Analistas</div><div class="kpi-value" id="kpi-analistas">3</div></div>
+    </div>
+    <div class="filter-row">
+      <label>Filtrar por mes:</label>
+      <select id="filtroMes1" onchange="aplicarFiltros1()">
+        <option value="">Todos los meses</option>
+      </select>
+    </div>
+    <div class="charts">
+      <div class="card">
+        <div class="card-title">Facturas por analista</div>
+        <div style="position:relative; height:240px;">
+          <canvas id="chartFacturas"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">SOs por analista</div>
+        <div style="position:relative; height:240px;">
+          <canvas id="chartSOs"></canvas>
+        </div>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">SOs por analista</div>
-      <div style="position:relative; height:240px;">
-        <canvas id="chartSOs" role="img" aria-label="Cantidad de SOs por analista">Cargando...</canvas>
+      <div class="search-row">
+        <input type="text" id="filtro1" placeholder="Buscar por analista, FCL, factura, banco, shipper..." oninput="filtrarTabla1()" />
       </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Analista</th><th>N° FCL</th><th>N° Factura</th>
+              <th>ETA (Arribo Aduana)</th><th>Depósito</th>
+              <th>FOB SIMI Total</th><th>Banco Asignado</th><th>Shipper</th>
+            </tr>
+          </thead>
+          <tbody id="tbody1"><tr class="loading-row"><td colspan="8">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+      <p class="conteo" id="conteo1"></p>
     </div>
   </div>
 
-  <div class="card">
-    <div class="search-row">
-      <input type="text" id="filtro" placeholder="Buscar por analista, FCL, factura, banco, shipper..." oninput="filtrarTabla()" />
+  <!-- TAB 2 -->
+  <div id="tab2" class="tab-panel">
+    <div class="kpis" id="kpis2">
+      <div class="kpi purple"><div class="kpi-label">Modelos Únicos</div><div class="kpi-value" id="k2-modelos">—</div></div>
+      <div class="kpi teal"><div class="kpi-label">Precio Invoice Total (USD)</div><div class="kpi-value" id="k2-precio">—</div></div>
+      <div class="kpi amber"><div class="kpi-label">Valor Capturado (USD)</div><div class="kpi-value" id="k2-capturado">—</div></div>
+      <div class="kpi blue"><div class="kpi-label">Marca Propia</div><div class="kpi-value" id="k2-propia">—</div></div>
+      <div class="kpi red"><div class="kpi-label">Marca de Terceros</div><div class="kpi-value" id="k2-terceros">—</div></div>
+      <div class="kpi green"><div class="kpi-label">MP Nuevos</div><div class="kpi-value" id="k2-nuevos">—</div></div>
+      <div class="kpi purple"><div class="kpi-label">MP Repetidos</div><div class="kpi-value" id="k2-repetidos">—</div></div>
+      <div class="kpi teal"><div class="kpi-label">% Sub</div><div class="kpi-value" id="k2-sub">—</div></div>
+      <div class="kpi amber"><div class="kpi-label">% Sobre</div><div class="kpi-value" id="k2-sobre">—</div></div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Analista</th>
-            <th>N° FCL</th>
-            <th>N° Factura</th>
-            <th>ETA (Arribo Aduana)</th>
-            <th>Depósito</th>
-            <th>FOB SIMI Total</th>
-            <th>Banco Asignado</th>
-            <th>Shipper</th>
-          </tr>
-        </thead>
-        <tbody id="tbody">
-          <tr class="loading-row"><td colspan="8">Cargando datos...</td></tr>
-        </tbody>
-      </table>
+    <div class="filter-row">
+      <label>Filtrar por mes:</label>
+      <select id="filtroMes2" onchange="aplicarFiltros2()">
+        <option value="">Todos los meses</option>
+      </select>
     </div>
-    <p class="conteo" id="conteo"></p>
   </div>
+
 </main>
 
 <script>
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=1136888913&single=true&output=csv';
+const CSV1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=1136888913&single=true&output=csv';
+const CSV2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=1418243662&single=true&output=csv';
 
 const ANALISTAS = ['Luciana', 'Florencia', 'Aymara'];
+const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invoice: 'N° Invoice', arribo: 'Fecha de arribo a Aduana', deposito: 'Deposito ZFLP', fobTotal: 'FOB SIMI TOTAL', banco: 'Banco Asignado', shipper: 'Shipper', so: 'ID Stock Origen' };
+const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido' };
 
-const COLS = {
-  responsable: 'Responsable Commercial Invoice',
-  fcl: 'N° FCL',
-  invoice: 'N° Invoice',
-  arribo: 'Fecha de arribo a Aduana',
-  deposito: 'Deposito ZFLP',
-  fobTotal: 'FOB SIMI TOTAL',
-  banco: 'Banco Asignado',
-  shipper: 'Shipper',
-  so: 'ID Stock Origen'
-};
-
-let todosLosDatos = [];
-let chartFacturas = null;
-let chartSOs = null;
+let datos1 = [], datos2 = [];
+let chartF = null, chartS = null;
 
 function parseFecha(str) {
   if (!str) return null;
@@ -408,197 +241,183 @@ function parseFecha(str) {
   return new Date(str);
 }
 
-function poblarFiltroMes(datos) {
+function parsNum(str) {
+  if (!str) return 0;
+  let s = str.toString().trim().replace(/[^0-9.,-]/g, '');
+  if (s.includes('.') && s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  else if (s.includes(',')) s = s.replace(',', '.');
+  return parseFloat(s) || 0;
+}
+
+function poblarMeses(datos, colFecha, selectId) {
   const meses = new Set();
   datos.forEach(r => {
-    const f = parseFecha(r[COLS.arribo]);
+    const f = parseFecha(r[colFecha]);
     if (f && !isNaN(f)) meses.add(`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`);
   });
-  const select = document.getElementById('filtroMes');
-  const current = select.value;
-  select.innerHTML = '<option value="">Todos los meses</option>';
+  const sel = document.getElementById(selectId);
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos los meses</option>';
   [...meses].sort().reverse().forEach(m => {
     const [y, mo] = m.split('-');
     const label = new Date(y, mo-1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
-    select.innerHTML += `<option value="${m}" ${current===m?'selected':''}>${label.charAt(0).toUpperCase()+label.slice(1)}</option>`;
+    sel.innerHTML += `<option value="${m}" ${cur===m?'selected':''}>${label.charAt(0).toUpperCase()+label.slice(1)}</option>`;
   });
 }
 
-function filtrarPorMes(datos) {
-  const mes = document.getElementById('filtroMes').value;
+function filtrarMes(datos, colFecha, selectId) {
+  const mes = document.getElementById(selectId).value;
   if (!mes) return datos;
   const [y, mo] = mes.split('-').map(Number);
   return datos.filter(r => {
-    const f = parseFecha(r[COLS.arribo]);
+    const f = parseFecha(r[colFecha]);
     return f && f.getFullYear() === y && f.getMonth()+1 === mo;
   });
 }
 
+// ─── TAB 1 ───
 function getAnalista(r) {
-  const resp = (r[COLS.responsable] || '').trim();
+  const resp = (r[C1.responsable] || '').trim();
   return ANALISTAS.find(a => resp.toLowerCase().includes(a.toLowerCase())) || null;
 }
 
-// Agrupa filas por FCL, suma FOB, toma primer valor de otros campos
 function agruparPorFCL(datos) {
   const mapa = {};
   datos.forEach(r => {
-    const fcl = (r[COLS.fcl] || '').trim();
+    const fcl = (r[C1.fcl] || '').trim();
     if (!fcl) return;
-    if (!mapa[fcl]) {
-      mapa[fcl] = {
-        analista: r[COLS.responsable] || '-',
-        fcl,
-        invoice: r[COLS.invoice] || '-',
-        arribo: r[COLS.arribo] || '-',
-        deposito: r[COLS.deposito] || '-',
-        fobTotal: 0,
-        banco: r[COLS.banco] || '-',
-        shipper: r[COLS.shipper] || '-'
-      };
-    }
-    let fobStr = (r[COLS.fobTotal] || '0').toString().trim();
-    fobStr = fobStr.replace(/[^0-9.,-]/g, '');
-    // Formato argentino: punto como miles, coma como decimal (ej: 1.234,56 o 1234,56)
-    if (fobStr.includes('.') && fobStr.includes(',')) {
-      fobStr = fobStr.replace(/\./g, '').replace(',', '.');
-    } else if (fobStr.includes(',')) {
-      fobStr = fobStr.replace(',', '.');
-    }
-    const fob = parseFloat(fobStr);
-    if (!isNaN(fob)) mapa[fcl].fobTotal += fob;
+    if (!mapa[fcl]) mapa[fcl] = { analista: r[C1.responsable]||'-', fcl, invoice: r[C1.invoice]||'-', arribo: r[C1.arribo]||'-', deposito: r[C1.deposito]||'-', fobTotal: 0, banco: r[C1.banco]||'-', shipper: r[C1.shipper]||'-' };
+    mapa[fcl].fobTotal += parsNum(r[C1.fobTotal]);
   });
   return Object.values(mapa);
 }
 
-function debugFOB(datos) {
-  console.log('=== DEBUG FOB SIMI TOTAL (primeros 5 valores) ===');
-  datos.slice(0,5).forEach((r,i) => {
-    console.log(`Fila ${i+1} | FCL: "${r[COLS.fcl]}" | FOB raw: "${r[COLS.fobTotal]}"`);
-  });
+function aplicarFiltros1() {
+  const d = filtrarMes(datos1, C1.arribo, 'filtroMes1');
+  document.getElementById('kpi-facturas').textContent = new Set(d.map(r=>r[C1.invoice]).filter(Boolean)).size.toLocaleString();
+  document.getElementById('kpi-sos').textContent = new Set(d.map(r=>r[C1.so]).filter(Boolean)).size.toLocaleString();
+  renderChartFacturas(d); renderChartSOs(d); renderTabla1(d);
 }
 
-function aplicarFiltros() {
-  const datos = filtrarPorMes(todosLosDatos);
-  debugFOB(datos);
-  renderKPIs(datos);
-  renderChartFacturas(datos);
-  renderChartSOs(datos);
-  renderTabla(datos);
-}
-
-function renderKPIs(datos) {
-  const facturas = new Set(datos.map(r => r[COLS.invoice]).filter(Boolean)).size;
-  const sos = new Set(datos.map(r => r[COLS.so]).filter(Boolean)).size;
-  document.getElementById('kpi-facturas').textContent = facturas.toLocaleString();
-  document.getElementById('kpi-sos').textContent = sos.toLocaleString();
-}
-
-function renderChartFacturas(datos) {
-  const conteo = {};
-  ANALISTAS.forEach(a => conteo[a] = new Set());
-  datos.forEach(r => {
-    const a = getAnalista(r);
-    if (a && r[COLS.invoice]) conteo[a].add(r[COLS.invoice]);
-  });
-  if (chartFacturas) chartFacturas.destroy();
-  chartFacturas = new Chart(document.getElementById('chartFacturas'), {
+function renderChartFacturas(d) {
+  const c = {}; ANALISTAS.forEach(a => c[a] = new Set());
+  d.forEach(r => { const a = getAnalista(r); if (a && r[C1.invoice]) c[a].add(r[C1.invoice]); });
+  if (chartF) chartF.destroy();
+  chartF = new Chart(document.getElementById('chartFacturas'), {
     type: 'bar',
-    data: {
-      labels: ANALISTAS,
-      datasets: [{ data: ANALISTAS.map(a => conteo[a].size), backgroundColor: ['rgba(124,111,247,0.85)','rgba(124,111,247,0.65)','rgba(124,111,247,0.45)'], borderRadius: 6 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 13, weight: '500' } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
-      }
-    }
+    data: { labels: ANALISTAS, datasets: [{ data: ANALISTAS.map(a=>c[a].size), backgroundColor: ['rgba(124,111,247,0.85)','rgba(124,111,247,0.65)','rgba(124,111,247,0.45)'], borderRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } }, y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true } } }
   });
 }
 
-function renderChartSOs(datos) {
-  const conteo = {};
-  ANALISTAS.forEach(a => conteo[a] = new Set());
-  datos.forEach(r => {
-    const a = getAnalista(r);
-    if (a && r[COLS.so]) conteo[a].add(r[COLS.so]);
-  });
-  if (chartSOs) chartSOs.destroy();
-  chartSOs = new Chart(document.getElementById('chartSOs'), {
+function renderChartSOs(d) {
+  const c = {}; ANALISTAS.forEach(a => c[a] = new Set());
+  d.forEach(r => { const a = getAnalista(r); if (a && r[C1.so]) c[a].add(r[C1.so]); });
+  if (chartS) chartS.destroy();
+  chartS = new Chart(document.getElementById('chartSOs'), {
     type: 'doughnut',
-    data: {
-      labels: ANALISTAS,
-      datasets: [{ data: ANALISTAS.map(a => conteo[a].size), backgroundColor: ['rgba(45,212,176,0.9)','rgba(45,212,176,0.6)','rgba(45,212,176,0.35)'], borderColor: '#16181c', borderWidth: 3 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } }
-      },
-      cutout: '65%'
-    }
+    data: { labels: ANALISTAS, datasets: [{ data: ANALISTAS.map(a=>c[a].size), backgroundColor: ['rgba(45,212,176,0.9)','rgba(45,212,176,0.6)','rgba(45,212,176,0.35)'], borderColor: '#16181c', borderWidth: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } } }, cutout: '65%' }
   });
 }
 
-function renderTabla(datos) {
-  const tbody = document.getElementById('tbody');
-  if (!datos.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="8">Sin resultados</td></tr>'; return; }
-  const filas = agruparPorFCL(datos);
+function renderTabla1(d) {
+  const tbody = document.getElementById('tbody1');
+  const filas = agruparPorFCL(d);
+  if (!filas.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="8">Sin resultados</td></tr>'; return; }
   tbody.innerHTML = filas.slice(0,300).map(r => {
     const fob = r.fobTotal > 0 ? `$ ${r.fobTotal.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2})}` : '-';
-    return `<tr>
-      <td class="primary">${r.analista}</td>
-      <td style="font-family:var(--mono); color:var(--text);">${r.fcl}</td>
-      <td>${r.invoice}</td>
-      <td>${r.arribo}</td>
-      <td>${r.deposito}</td>
-      <td style="font-family:var(--mono); color:var(--teal);">${fob}</td>
-      <td>${r.banco}</td>
-      <td>${r.shipper}</td>
-    </tr>`;
+    return `<tr><td class="primary">${r.analista}</td><td style="font-family:var(--mono);color:var(--text);">${r.fcl}</td><td>${r.invoice}</td><td>${r.arribo}</td><td>${r.deposito}</td><td style="font-family:var(--mono);color:var(--teal);">${fob}</td><td>${r.banco}</td><td>${r.shipper}</td></tr>`;
   }).join('');
-  document.getElementById('conteo').textContent = `Mostrando ${Math.min(filas.length,300)} de ${filas.length} FCLs`;
+  document.getElementById('conteo1').textContent = `Mostrando ${Math.min(filas.length,300)} de ${filas.length} FCLs`;
 }
 
-function filtrarTabla() {
-  const q = document.getElementById('filtro').value.toLowerCase();
-  const base = filtrarPorMes(todosLosDatos);
-  const filtrados = base.filter(r =>
-    (r[COLS.responsable]||'').toLowerCase().includes(q) ||
-    (r[COLS.fcl]||'').toLowerCase().includes(q) ||
-    (r[COLS.invoice]||'').toLowerCase().includes(q) ||
-    (r[COLS.banco]||'').toLowerCase().includes(q) ||
-    (r[COLS.shipper]||'').toLowerCase().includes(q)
-  );
-  renderTabla(filtrados);
+function filtrarTabla1() {
+  const q = document.getElementById('filtro1').value.toLowerCase();
+  const base = filtrarMes(datos1, C1.arribo, 'filtroMes1');
+  renderTabla1(base.filter(r =>
+    (r[C1.responsable]||'').toLowerCase().includes(q) ||
+    (r[C1.fcl]||'').toLowerCase().includes(q) ||
+    (r[C1.invoice]||'').toLowerCase().includes(q) ||
+    (r[C1.banco]||'').toLowerCase().includes(q) ||
+    (r[C1.shipper]||'').toLowerCase().includes(q)
+  ));
 }
 
-function cargarDatos() {
+// ─── TAB 2 ───
+function aplicarFiltros2() {
+  const d = filtrarMes(datos2, C2.eta, 'filtroMes2');
+
+  // Modelos únicos
+  const modelosUnicos = new Set(d.map(r => r[C2.modelo]).filter(Boolean)).size;
+  document.getElementById('k2-modelos').textContent = modelosUnicos.toLocaleString();
+
+  // Precio Invoice total
+  const precioTotal = d.reduce((s,r) => s + parsNum(r[C2.precio]), 0);
+  document.getElementById('k2-precio').textContent = '$ ' + precioTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  // Valor capturado
+  const capturado = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
+  document.getElementById('k2-capturado').textContent = '$ ' + capturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  // Marca Propia vs Terceros (por modelos únicos)
+  const modelosMarcaMap = {};
+  d.forEach(r => { if (r[C2.modelo]) modelosMarcaMap[r[C2.modelo]] = (r[C2.tipoMarca]||'').trim(); });
+  const marcasVals = Object.values(modelosMarcaMap);
+  const propia = marcasVals.filter(m => m.toLowerCase().includes('propia')).length;
+  const terceros = marcasVals.filter(m => m.toLowerCase().includes('tercero')).length;
+  document.getElementById('k2-propia').textContent = propia;
+  document.getElementById('k2-terceros').textContent = terceros;
+
+  // MP Nuevos y Repetidos (modelos únicos de Marca Propia)
+  const mpMap = {};
+  d.filter(r => (r[C2.tipoMarca]||'').toLowerCase().includes('propia')).forEach(r => {
+    if (r[C2.modelo]) mpMap[r[C2.modelo]] = (r[C2.nuevoRepetido]||'').trim();
+  });
+  const mpVals = Object.values(mpMap);
+  document.getElementById('k2-nuevos').textContent = mpVals.filter(v => v.toLowerCase().includes('nuevo')).length;
+  document.getElementById('k2-repetidos').textContent = mpVals.filter(v => v.toLowerCase().includes('repetido')).length;
+
+  // % Sub y % Sobre (promedio de % aplicado por estrategia)
+  const subRows = d.filter(r => (r[C2.estrategia]||'').toLowerCase().includes('sub'));
+  const sobreRows = d.filter(r => (r[C2.estrategia]||'').toLowerCase().includes('sobre'));
+  const promSub = subRows.length ? subRows.reduce((s,r) => s + parsNum(r[C2.pctAplicado]), 0) / subRows.length : 0;
+  const promSobre = sobreRows.length ? sobreRows.reduce((s,r) => s + parsNum(r[C2.pctAplicado]), 0) / sobreRows.length : 0;
+  document.getElementById('k2-sub').textContent = promSub.toFixed(1) + '%';
+  document.getElementById('k2-sobre').textContent = promSobre.toFixed(1) + '%';
+}
+
+// ─── TABS ───
+function cambiarTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ─── CARGA ───
+function actualizarTodo() {
   const btn = document.getElementById('btnActualizar');
   btn.classList.add('loading');
-  document.getElementById('tbody').innerHTML = '<tr class="loading-row"><td colspan="8">Cargando datos...</td></tr>';
-  Papa.parse(CSV_URL, {
-    download: true, header: true, skipEmptyLines: true,
-    complete(results) {
-      todosLosDatos = results.data;
-      poblarFiltroMes(todosLosDatos);
-      aplicarFiltros();
-      const now = new Date();
-      document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${now.toLocaleTimeString('es-AR')}`;
-      btn.classList.remove('loading');
-    },
-    error() {
-      document.getElementById('tbody').innerHTML = '<tr><td colspan="8" class="error-msg">No se pudieron cargar los datos.</td></tr>';
-      btn.classList.remove('loading');
-    }
-  });
+  let done = 0;
+  function check() { if (++done === 2) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
+
+  Papa.parse(CSV1, { download: true, header: true, skipEmptyLines: true, complete(r) {
+    datos1 = r.data;
+    poblarMeses(datos1, C1.arribo, 'filtroMes1');
+    aplicarFiltros1();
+    check();
+  }, error() { check(); } });
+
+  Papa.parse(CSV2, { download: true, header: true, skipEmptyLines: true, complete(r) {
+    datos2 = r.data;
+    poblarMeses(datos2, C2.eta, 'filtroMes2');
+    aplicarFiltros2();
+    check();
+  }, error() { check(); } });
 }
 
-cargarDatos();
+actualizarTodo();
 </script>
-
 </body>
 </html>
