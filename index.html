@@ -202,22 +202,35 @@
 
   <!-- TAB 2 -->
   <div id="tab2" class="tab-panel">
-    <div class="kpis" id="kpis2">
+    <!-- Fila 1: 5 tarjetas -->
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:12px;">
       <div class="kpi purple"><div class="kpi-label">Modelos Únicos</div><div class="kpi-value" id="k2-modelos">—</div></div>
       <div class="kpi teal"><div class="kpi-label">Precio Invoice Total (USD)</div><div class="kpi-value" id="k2-precio">—</div></div>
       <div class="kpi amber"><div class="kpi-label">Valor Capturado (USD)</div><div class="kpi-value" id="k2-capturado">—</div></div>
       <div class="kpi blue"><div class="kpi-label">Marca Propia</div><div class="kpi-value" id="k2-propia">—</div></div>
       <div class="kpi red"><div class="kpi-label">Marca de Terceros</div><div class="kpi-value" id="k2-terceros">—</div></div>
+    </div>
+    <!-- Fila 2: 6 tarjetas -->
+    <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:24px;">
       <div class="kpi green"><div class="kpi-label">MP Nuevos</div><div class="kpi-value" id="k2-nuevos">—</div></div>
       <div class="kpi purple"><div class="kpi-label">MP Repetidos</div><div class="kpi-value" id="k2-repetidos">—</div></div>
       <div class="kpi teal"><div class="kpi-label">% Sub</div><div class="kpi-value" id="k2-sub">—</div></div>
       <div class="kpi amber"><div class="kpi-label">% Sobre</div><div class="kpi-value" id="k2-sobre">—</div></div>
+      <div class="kpi blue"><div class="kpi-label">% Capturado / Invoice</div><div class="kpi-value" id="k2-pct-capturado">—</div></div>
+      <div class="kpi red"><div class="kpi-label">Rdo Total (USD)</div><div class="kpi-value" id="k2-rdo-total">—</div></div>
     </div>
     <div class="filter-row">
       <label>Filtrar por mes:</label>
       <select id="filtroMes2" onchange="aplicarFiltros2()">
         <option value="">Todos los meses</option>
       </select>
+    </div>
+    <!-- Gráfico de líneas -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Valor capturado vs Precio Invoice Total por mes (USD)</div>
+      <div style="position:relative; height:300px;">
+        <canvas id="chartLineas2"></canvas>
+      </div>
     </div>
   </div>
 
@@ -385,6 +398,69 @@ function aplicarFiltros2() {
   const promSobre = sobreRows.length ? sobreRows.reduce((s,r) => s + parsNum(r[C2.pctAplicado]), 0) / sobreRows.length : 0;
   document.getElementById('k2-sub').textContent = promSub.toFixed(1) + '%';
   document.getElementById('k2-sobre').textContent = promSobre.toFixed(1) + '%';
+
+  // % Capturado / Invoice
+  const pctCapturado = precioTotal > 0 ? (capturado / precioTotal * 100) : 0;
+  document.getElementById('k2-pct-capturado').textContent = pctCapturado.toFixed(1) + '%';
+
+  // Rdo Total (suma total valor absoluto columna L)
+  const rdoTotal = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
+  document.getElementById('k2-rdo-total').textContent = '$ ' + rdoTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  // Gráfico de líneas por mes (todos los datos, no filtrados por mes)
+  renderChartLineas();
+}
+
+let chartL2 = null;
+function renderChartLineas() {
+  // Agrupar por mes todos los datos2
+  const mesMap = {};
+  datos2.forEach(r => {
+    const f = parseFecha(r[C2.eta]);
+    if (!f || isNaN(f)) return;
+    const key = `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`;
+    if (!mesMap[key]) mesMap[key] = { precio: 0, capturado: 0 };
+    mesMap[key].precio += parsNum(r[C2.precio]);
+    mesMap[key].capturado += parsNum(r[C2.valorAbs]);
+  });
+  const meses = Object.keys(mesMap).sort();
+  const labels = meses.map(m => {
+    const [y, mo] = m.split('-');
+    const l = new Date(y, mo-1, 1).toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
+    return l.charAt(0).toUpperCase() + l.slice(1);
+  });
+  if (chartL2) chartL2.destroy();
+  chartL2 = new Chart(document.getElementById('chartLineas2'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Precio Invoice Total (USD)',
+          data: meses.map(m => mesMap[m].precio),
+          borderColor: '#7c6ff7', backgroundColor: 'rgba(124,111,247,0.1)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#7c6ff7', tension: 0.3, fill: true
+        },
+        {
+          label: 'Valor Capturado (USD)',
+          data: meses.map(m => mesMap[m].capturado),
+          borderColor: '#2dd4b0', backgroundColor: 'rgba(45,212,176,0.1)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#2dd4b0', tension: 0.3, fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
+    }
+  });
 }
 
 // ─── TABS ───
