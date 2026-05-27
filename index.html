@@ -535,9 +535,10 @@ function parseFecha4(str) {
 }
 
 function poblarMeses4() {
+  const keyPasadoM = datos4.length > 0 ? Object.keys(datos4[0]).find(k => k.trim() === 'PASADO POR GD') || 'PASADO POR GD' : 'PASADO POR GD';
   const meses = new Set();
   datos4.forEach(r => {
-    const f = parseFecha4(r[C4.pasadoGD]);
+    const f = parseFecha4(r[keyPasadoM]);
     if (f && !isNaN(f)) meses.add(`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`);
   });
   const sel = document.getElementById('filtroMes4');
