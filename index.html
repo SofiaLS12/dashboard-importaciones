@@ -149,6 +149,7 @@
 <nav class="tabs-nav">
   <button class="tab-btn active" onclick="cambiarTab('tab1', this)">Facturas de Importación</button>
   <button class="tab-btn" onclick="cambiarTab('tab2', this)">Estrategia de Declaración Global</button>
+  <button class="tab-btn" onclick="cambiarTab('tab3', this)">Gestión Proveedores</button>
 </nav>
 
 <main>
@@ -234,18 +235,50 @@
     </div>
   </div>
 
+
+  <!-- TAB 3 -->
+  <div id="tab3" class="tab-panel">
+    <!-- Tarjetas -->
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:24px;">
+      <div class="kpi teal"><div class="kpi-label">Valor Total Pagado (ARS)</div><div class="kpi-value" id="k3-pagado">—</div></div>
+      <div class="kpi amber"><div class="kpi-label">Ahorro Total del Mes (ARS)</div><div class="kpi-value" id="k3-ahorro">—</div></div>
+    </div>
+    <div class="filter-row" style="margin-bottom:20px;">
+      <label>Filtrar por mes:</label>
+      <select id="filtroMes3" onchange="aplicarFiltros3()">
+        <option value="">Todos los meses</option>
+      </select>
+    </div>
+    <div class="charts">
+      <div class="card">
+        <div class="card-title">Total pagado por Analista</div>
+        <div style="position:relative; height:280px;">
+          <canvas id="chartPagado3"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Total ahorrado por Analista</div>
+        <div style="position:relative; height:280px;">
+          <canvas id="chartAhorro3"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script>
 const CSV1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=1136888913&single=true&output=csv';
 const CSV2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=1418243662&single=true&output=csv';
+const CSV3 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=574545948&single=true&output=csv';
 
 const ANALISTAS = ['Luciana', 'Florencia', 'Aymara'];
 const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invoice: 'N° Invoice', arribo: 'Fecha de arribo a Aduana', deposito: 'Deposito ZFLP', fobTotal: 'FOB SIMI TOTAL', banco: 'Banco Asignado', shipper: 'Shipper', so: 'ID Stock Origen' };
+const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido' };
 
-let datos1 = [], datos2 = [];
-let chartF = null, chartS = null;
+let datos1 = [], datos2 = [], datos3 = [];
+let chartF = null, chartS = null, chartP3 = null, chartA3 = null;
 
 function parseFecha(str) {
   if (!str) return null;
@@ -463,6 +496,60 @@ function renderChartLineas() {
   });
 }
 
+
+// ─── TAB 3 ───
+function aplicarFiltros3() {
+  const d = filtrarMes(datos3, C3.fecha, 'filtroMes3');
+
+  // Tipos
+  const esPago = r => {
+    const t = (r[C3.tipo]||'').toLowerCase();
+    return t.includes('factura') || t.includes('nota de debito') || t.includes('débito');
+  };
+  const esNC = r => (r[C3.tipo]||'').toLowerCase().includes('nota de cr');
+
+  // Tarjetas
+  const pagado = d.filter(esPago).reduce((s,r) => s + parsNum(r[C3.monto]), 0);
+  const ahorro = d.filter(esNC).reduce((s,r) => s + parsNum(r[C3.monto]), 0);
+  document.getElementById('k3-pagado').textContent = '$ ' + Math.abs(pagado).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+  document.getElementById('k3-ahorro').textContent = '$ ' + Math.abs(ahorro).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  // Gráfico pagado por analista
+  const analistas = [...new Set(d.map(r => r[C3.responsable]).filter(Boolean))].sort();
+  const datosPagado = analistas.map(a => d.filter(r => r[C3.responsable]===a && esPago(r)).reduce((s,r) => s + parsNum(r[C3.monto]), 0));
+  const datosAhorro = analistas.map(a => d.filter(r => r[C3.responsable]===a && esNC(r)).reduce((s,r) => s + Math.abs(parsNum(r[C3.monto])), 0));
+
+  const colors = ['rgba(124,111,247,0.85)','rgba(45,212,176,0.85)','rgba(245,166,35,0.85)','rgba(240,96,96,0.85)','rgba(55,138,221,0.85)','rgba(99,153,34,0.85)'];
+
+  if (chartP3) chartP3.destroy();
+  chartP3 = new Chart(document.getElementById('chartPagado3'), {
+    type: 'bar',
+    data: { labels: analistas, datasets: [{ data: datosPagado, backgroundColor: colors.slice(0, analistas.length), borderRadius: 6 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } } },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
+        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
+    }
+  });
+
+  if (chartA3) chartA3.destroy();
+  chartA3 = new Chart(document.getElementById('chartAhorro3'), {
+    type: 'doughnut',
+    data: { labels: analistas, datasets: [{ data: datosAhorro, backgroundColor: colors.slice(0, analistas.length), borderColor: '#16181c', borderWidth: 3 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: $ ${ctx.parsed.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
+      },
+      cutout: '60%'
+    }
+  });
+}
+
 // ─── TABS ───
 function cambiarTab(id, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -476,7 +563,7 @@ function actualizarTodo() {
   const btn = document.getElementById('btnActualizar');
   btn.classList.add('loading');
   let done = 0;
-  function check() { if (++done === 2) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
+  function check() { if (++done === 3) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
 
   Papa.parse(CSV1, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datos1 = r.data;
@@ -489,6 +576,13 @@ function actualizarTodo() {
     datos2 = r.data;
     poblarMeses(datos2, C2.eta, 'filtroMes2');
     aplicarFiltros2();
+    check();
+  }, error() { check(); } });
+
+  Papa.parse(CSV3, { download: true, header: true, skipEmptyLines: true, complete(r) {
+    datos3 = r.data;
+    poblarMeses(datos3, C3.fecha, 'filtroMes3');
+    aplicarFiltros3();
     check();
   }, error() { check(); } });
 }
