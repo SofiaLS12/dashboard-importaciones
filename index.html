@@ -538,22 +538,25 @@ function aplicarFiltros4() {
   // Excluir analista Sofi
   d = d.filter(r => !(r[C4.analista]||'').toLowerCase().includes('sofi'));
 
-  // Total FCLs (celdas con dato en columna Embarque)
+  // Total FCLs: contar filas con celda no vacía en columna A (Embarque), filtradas por mes en col D
   const totalFCLs = d.filter(r => (r[C4.embarque]||'').trim() !== '').length;
   document.getElementById('k4-fcls').textContent = totalFCLs.toLocaleString();
 
-  // Promedio ponderado días (columna F)
-  const filasDias = d.filter(r => r[C4.difDias] !== '' && !isNaN(parsNum(r[C4.difDias])));
+  // Promedio días general (columna F)
+  const filasDias = d.filter(r => (r[C4.embarque]||'').trim() !== '' && r[C4.difDias] !== '' && !isNaN(parsNum(r[C4.difDias])));
   const promDias = filasDias.length ? filasDias.reduce((s,r) => s + parsNum(r[C4.difDias]), 0) / filasDias.length : 0;
   document.getElementById('k4-dias').textContent = promDias.toFixed(1);
 
-  // Por analista
-  const analistasSet = new Set(d.map(r => (r[C4.analista]||'').trim()).filter(Boolean));
+  // Por analista — solo filas con Embarque no vacío
+  const dConEmbarque = d.filter(r => (r[C4.embarque]||'').trim() !== '');
+  const analistasSet = new Set(dConEmbarque.map(r => (r[C4.analista]||'').trim()).filter(Boolean));
   const analistas = [...analistasSet].sort();
 
-  const fclsPorAnalista = analistas.map(a => d.filter(r => (r[C4.analista]||'').trim() === a && (r[C4.embarque]||'').trim() !== '').length);
+  const fclsPorAnalista = analistas.map(a =>
+    dConEmbarque.filter(r => (r[C4.analista]||'').trim() === a).length
+  );
   const diasPorAnalista = analistas.map(a => {
-    const filas = d.filter(r => (r[C4.analista]||'').trim() === a && r[C4.difDias] !== '' && !isNaN(parsNum(r[C4.difDias])));
+    const filas = dConEmbarque.filter(r => (r[C4.analista]||'').trim() === a && !isNaN(parsNum(r[C4.difDias])) && r[C4.difDias] !== '');
     return filas.length ? filas.reduce((s,r) => s + parsNum(r[C4.difDias]), 0) / filas.length : 0;
   });
 
@@ -566,16 +569,25 @@ function aplicarFiltros4() {
         {
           label: 'Cantidad de FCLs',
           data: fclsPorAnalista,
-          backgroundColor: 'rgba(124,111,247,0.85)',
+          backgroundColor: 'rgba(124,111,247,0.75)',
           borderRadius: 6,
-          yAxisID: 'y'
+          yAxisID: 'y',
+          type: 'bar',
+          order: 2
         },
         {
           label: 'Promedio días',
           data: diasPorAnalista.map(v => parseFloat(v.toFixed(2))),
-          backgroundColor: 'rgba(45,212,176,0.85)',
-          borderRadius: 6,
-          yAxisID: 'y2'
+          borderColor: '#2dd4b0',
+          backgroundColor: 'rgba(45,212,176,0.15)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#2dd4b0',
+          pointRadius: 5,
+          tension: 0.3,
+          type: 'line',
+          yAxisID: 'y2',
+          order: 1,
+          fill: false
         }
       ]
     },
@@ -588,7 +600,7 @@ function aplicarFiltros4() {
       scales: {
         x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
         y: { position: 'left', ticks: { color: '#7c6ff7', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, title: { display: true, text: 'FCLs', color: '#7c6ff7', font: { size: 11 } } },
-        y2: { position: 'right', ticks: { color: '#2dd4b0', font: { size: 11 } }, grid: { drawOnChartArea: false }, beginAtZero: true, title: { display: true, text: 'Días', color: '#2dd4b0', font: { size: 11 } } }
+        y2: { position: 'right', ticks: { color: '#2dd4b0', font: { size: 11 }, callback: v => v.toFixed(1) }, grid: { drawOnChartArea: false }, beginAtZero: true, title: { display: true, text: 'Días', color: '#2dd4b0', font: { size: 11 } } }
       }
     }
   });
