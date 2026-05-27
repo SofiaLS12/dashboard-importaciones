@@ -522,41 +522,72 @@ function renderChartLineas() {
 
 
 // ─── TAB 4 ───
+function parseFecha4(str) {
+  // Maneja formatos: D/M/YYYY, DD/MM/YYYY
+  if (!str) return null;
+  str = str.toString().trim();
+  const parts = str.split('/');
+  if (parts.length === 3) {
+    const d = parseInt(parts[0]), m = parseInt(parts[1]), y = parseInt(parts[2]);
+    if (!isNaN(d) && !isNaN(m) && !isNaN(y)) return new Date(y, m-1, d);
+  }
+  return null;
+}
+
+function poblarMeses4() {
+  const meses = new Set();
+  datos4.forEach(r => {
+    const f = parseFecha4(r[C4.pasadoGD]);
+    if (f && !isNaN(f)) meses.add(`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`);
+  });
+  const sel = document.getElementById('filtroMes4');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos los meses</option>';
+  [...meses].sort().reverse().forEach(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(y, mo-1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    sel.innerHTML += `<option value="${m}" ${cur===m?'selected':''}>${label.charAt(0).toUpperCase()+label.slice(1)}</option>`;
+  });
+}
+
 function aplicarFiltros4() {
   const mes = document.getElementById('filtroMes4').value;
-  let d = datos4;
 
-  // Filtrar por mes usando columna D (PASADO POR GD)
-  if (mes) {
+  // Filtrar por mes usando columna D
+  let d = datos4.filter(r => {
+    const f = parseFecha4(r[C4.pasadoGD]);
+    if (!f || isNaN(f)) return false;
+    if (!mes) return true;
     const [y, mo] = mes.split('-').map(Number);
-    d = d.filter(r => {
-      const f = parseFecha(r[C4.pasadoGD]);
-      return f && !isNaN(f) && f.getFullYear() === y && f.getMonth()+1 === mo;
-    });
-  }
+    return f.getFullYear() === y && f.getMonth()+1 === mo;
+  });
 
-  // Excluir analista Sofi
+  // Excluir Sofi
   d = d.filter(r => !(r[C4.analista]||'').toLowerCase().includes('sofi'));
 
-  // Total FCLs: contar filas con celda no vacía en columna A (Embarque), filtradas por mes en col D
-  const totalFCLs = d.filter(r => (r[C4.embarque]||'').trim() !== '').length;
-  document.getElementById('k4-fcls').textContent = totalFCLs.toLocaleString();
+  // Tarjeta 1: contar filas con Embarque no vacío
+  const conEmbarque = d.filter(r => (r[C4.embarque]||'').trim() !== '');
+  document.getElementById('k4-fcls').textContent = conEmbarque.length.toLocaleString();
 
-  // Promedio días general (columna F)
-  const filasDias = d.filter(r => (r[C4.embarque]||'').trim() !== '' && r[C4.difDias] !== '' && !isNaN(parsNum(r[C4.difDias])));
-  const promDias = filasDias.length ? filasDias.reduce((s,r) => s + parsNum(r[C4.difDias]), 0) / filasDias.length : 0;
-  document.getElementById('k4-dias').textContent = promDias.toFixed(1);
+  // Tarjeta 2: promedio días (columna F, coma decimal)
+  const filasDias = conEmbarque.filter(r => (r[C4.difDias]||'').trim() !== '');
+  const promDias = filasDias.length
+    ? filasDias.reduce((s,r) => s + parsNum(r[C4.difDias]), 0) / filasDias.length
+    : 0;
+  document.getElementById('k4-dias').textContent = promDias.toFixed(2);
 
-  // Por analista — solo filas con Embarque no vacío
-  const dConEmbarque = d.filter(r => (r[C4.embarque]||'').trim() !== '');
-  const analistasSet = new Set(dConEmbarque.map(r => (r[C4.analista]||'').trim()).filter(Boolean));
+  // Gráfico: por analista
+  const analistasSet = new Set(conEmbarque.map(r => (r[C4.analista]||'').trim()).filter(Boolean));
   const analistas = [...analistasSet].sort();
 
   const fclsPorAnalista = analistas.map(a =>
-    dConEmbarque.filter(r => (r[C4.analista]||'').trim() === a).length
+    conEmbarque.filter(r => (r[C4.analista]||'').trim() === a).length
   );
+
   const diasPorAnalista = analistas.map(a => {
-    const filas = dConEmbarque.filter(r => (r[C4.analista]||'').trim() === a && !isNaN(parsNum(r[C4.difDias])) && r[C4.difDias] !== '');
+    const filas = conEmbarque.filter(r =>
+      (r[C4.analista]||'').trim() === a && (r[C4.difDias]||'').trim() !== ''
+    );
     return filas.length ? filas.reduce((s,r) => s + parsNum(r[C4.difDias]), 0) / filas.length : 0;
   });
 
@@ -572,19 +603,18 @@ function aplicarFiltros4() {
           backgroundColor: 'rgba(124,111,247,0.75)',
           borderRadius: 6,
           yAxisID: 'y',
-          type: 'bar',
           order: 2
         },
         {
           label: 'Promedio días',
           data: diasPorAnalista.map(v => parseFloat(v.toFixed(2))),
+          type: 'line',
           borderColor: '#2dd4b0',
-          backgroundColor: 'rgba(45,212,176,0.15)',
+          backgroundColor: 'rgba(45,212,176,0.1)',
           borderWidth: 2.5,
           pointBackgroundColor: '#2dd4b0',
           pointRadius: 5,
           tension: 0.3,
-          type: 'line',
           yAxisID: 'y2',
           order: 1,
           fill: false
@@ -600,7 +630,7 @@ function aplicarFiltros4() {
       scales: {
         x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
         y: { position: 'left', ticks: { color: '#7c6ff7', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, title: { display: true, text: 'FCLs', color: '#7c6ff7', font: { size: 11 } } },
-        y2: { position: 'right', ticks: { color: '#2dd4b0', font: { size: 11 }, callback: v => v.toFixed(1) }, grid: { drawOnChartArea: false }, beginAtZero: true, title: { display: true, text: 'Días', color: '#2dd4b0', font: { size: 11 } } }
+        y2: { position: 'right', ticks: { color: '#2dd4b0', font: { size: 11 }, callback: v => v.toFixed(2) }, grid: { drawOnChartArea: false }, beginAtZero: true, title: { display: true, text: 'Días', color: '#2dd4b0', font: { size: 11 } } }
       }
     }
   });
@@ -697,7 +727,7 @@ function actualizarTodo() {
 
   Papa.parse(CSV4, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datos4 = r.data;
-    poblarMeses(datos4, C4.pasadoGD, 'filtroMes4');
+    poblarMeses4();
     aplicarFiltros4();
     check();
   }, error() { check(); } });
