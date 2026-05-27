@@ -523,7 +523,6 @@ function renderChartLineas() {
 
 // ─── TAB 4 ───
 function parseFecha4(str) {
-  // Maneja formatos: D/M/YYYY, DD/MM/YYYY
   if (!str) return null;
   str = str.toString().trim();
   const parts = str.split('/');
@@ -535,10 +534,9 @@ function parseFecha4(str) {
 }
 
 function poblarMeses4() {
-  const keyPasadoM = datos4.length > 0 ? Object.keys(datos4[0]).find(k => k.trim() === 'PASADO POR GD') || 'PASADO POR GD' : 'PASADO POR GD';
   const meses = new Set();
   datos4.forEach(r => {
-    const f = parseFecha4(r[keyPasadoM]);
+    const f = parseFecha4(r['PASADO POR GD']);
     if (f && !isNaN(f)) meses.add(`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`);
   });
   const sel = document.getElementById('filtroMes4');
@@ -551,12 +549,19 @@ function poblarMeses4() {
   });
 }
 
+function parseDias(str) {
+  if (!str) return null;
+  let s = str.toString().replace(/"/g, '').trim();
+  s = s.replace(',', '.');
+  const v = parseFloat(s);
+  return isNaN(v) ? null : v;
+}
+
 function aplicarFiltros4() {
   const mes = document.getElementById('filtroMes4').value;
 
-  // Filtrar por mes usando columna D
   let d = datos4.filter(r => {
-    const f = parseFecha4(r[C4.pasadoGD]);
+    const f = parseFecha4(r['PASADO POR GD']);
     if (!f || isNaN(f)) return false;
     if (!mes) return true;
     const [y, mo] = mes.split('-').map(Number);
@@ -564,32 +569,31 @@ function aplicarFiltros4() {
   });
 
   // Excluir Sofi
-  d = d.filter(r => !(r[C4.analista]||'').toLowerCase().includes('sofi'));
+  d = d.filter(r => !(r['Analista AGD']||'').toLowerCase().includes('sofi'));
 
   // Tarjeta 1: contar filas con Embarque no vacío
-  const conEmbarque = d.filter(r => (r[C4.embarque]||'').trim() !== '');
+  const conEmbarque = d.filter(r => (r['Embarque ']||'').trim() !== '');
   document.getElementById('k4-fcls').textContent = conEmbarque.length.toLocaleString();
 
-  // Tarjeta 2: promedio días (columna F, coma decimal)
-  const filasDias = conEmbarque.filter(r => (r[C4.difDias]||'').trim() !== '');
+  // Tarjeta 2: promedio días
+  const filasDias = conEmbarque.filter(r => parseDias(r['Dif dias']) !== null);
   const promDias = filasDias.length
-    ? filasDias.reduce((s,r) => s + parsNum(r[C4.difDias]), 0) / filasDias.length
+    ? filasDias.reduce((s,r) => s + parseDias(r['Dif dias']), 0) / filasDias.length
     : 0;
   document.getElementById('k4-dias').textContent = promDias.toFixed(2);
 
-  // Gráfico: por analista
-  const analistasSet = new Set(conEmbarque.map(r => (r[C4.analista]||'').trim()).filter(Boolean));
+  // Por analista
+  const analistasSet = new Set(conEmbarque.map(r => (r['Analista AGD']||'').trim()).filter(Boolean));
   const analistas = [...analistasSet].sort();
 
   const fclsPorAnalista = analistas.map(a =>
-    conEmbarque.filter(r => (r[C4.analista]||'').trim() === a).length
+    conEmbarque.filter(r => (r['Analista AGD']||'').trim() === a).length
   );
-
   const diasPorAnalista = analistas.map(a => {
     const filas = conEmbarque.filter(r =>
-      (r[C4.analista]||'').trim() === a && (r[C4.difDias]||'').trim() !== ''
+      (r['Analista AGD']||'').trim() === a && parseDias(r['Dif dias']) !== null
     );
-    return filas.length ? filas.reduce((s,r) => s + parsNum(r[C4.difDias]), 0) / filas.length : 0;
+    return filas.length ? filas.reduce((s,r) => s + parseDias(r['Dif dias']), 0) / filas.length : 0;
   });
 
   if (chartT4) chartT4.destroy();
