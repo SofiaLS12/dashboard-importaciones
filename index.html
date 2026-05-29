@@ -345,6 +345,20 @@
         </div>
       </div>
     </div>
+    <div class="charts" style="margin-top:16px;">
+      <div class="card">
+        <div class="card-title">FOB Total por Shipper (USD)</div>
+        <div style="position:relative; height:320px;">
+          <canvas id="chartShipper6"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">FOB Total por Banco — detalle (USD)</div>
+        <div style="position:relative; height:320px;">
+          <canvas id="chartBancoDetalle6"></canvas>
+        </div>
+      </div>
+    </div>
   </div>
 
 </main>
@@ -382,7 +396,7 @@ const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Respons
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido' };
 
 let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [];
-let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null;
+let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null;
 
 function parseFecha(str) {
   if (!str) return null;
@@ -981,6 +995,69 @@ function aplicarFiltros6() {
         tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } }
       },
       cutout: '55%'
+    }
+  });
+
+  // Gráfico 3 — FOB por Shipper (amarillo, barras horizontales)
+  // Solo filtro mes, sin filtro banco
+  let dShipper = datos6;
+  if (mes) {
+    const [y2, mo2] = mes.split('-').map(Number);
+    dShipper = datos6.filter(r => {
+      const f = parseFecha(r[C6.eta]);
+      return f && !isNaN(f) && f.getFullYear() === y2 && f.getMonth()+1 === mo2;
+    });
+  }
+  const shipperMap = {};
+  dShipper.forEach(r => {
+    const s = (r[C6.shipper]||'Sin shipper').trim();
+    shipperMap[s] = (shipperMap[s]||0) + parsNum(r[C6.fob]);
+  });
+  const shippers = Object.keys(shipperMap).sort((a,b) => shipperMap[b]-shipperMap[a]).slice(0,10);
+  const shipperVals = shippers.map(s => shipperMap[s]);
+  const amarillos = shippers.map((_,i) => `rgba(240,210,120,${0.95 - i*0.07 < 0.3 ? 0.3 : 0.95 - i*0.07})`);
+
+  if (chartSh6) chartSh6.destroy();
+  chartSh6 = new Chart(document.getElementById('chartShipper6'), {
+    type: 'bar',
+    data: {
+      labels: shippers,
+      datasets: [{ label: 'FOB Total (USD)', data: shipperVals, backgroundColor: amarillos, borderRadius: 4 }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` $ ${ctx.parsed.x.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true },
+        y: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Gráfico 4 — FOB por Banco detalle (naranja, filtro mes + banco)
+  const naranjasDetalle = bancos.map((_,i) => `rgba(251,146,60,${0.9 - i*0.08 < 0.3 ? 0.3 : 0.9 - i*0.08})`);
+
+  if (chartBD6) chartBD6.destroy();
+  chartBD6 = new Chart(document.getElementById('chartBancoDetalle6'), {
+    type: 'bar',
+    data: {
+      labels: bancos,
+      datasets: [{ label: 'FOB Total (USD)', data: valores, backgroundColor: naranjasDetalle, borderRadius: 6 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 12 }, maxRotation: 35 }, grid: { display: false } },
+        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
     }
   });
 }
