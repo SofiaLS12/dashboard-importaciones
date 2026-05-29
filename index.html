@@ -151,6 +151,7 @@
   <button class="tab-btn" onclick="cambiarTab('tab4', this)">Tiempos de Carga</button>
   <button class="tab-btn" onclick="cambiarTab('tab2', this)">Estrategia de Declaración Global</button>
   <button class="tab-btn" onclick="cambiarTab('tab3', this)">Gestión Proveedores</button>
+  <button class="tab-btn" onclick="cambiarTab('tab6', this)">Asignaciones</button>
 </nav>
 
 <main>
@@ -313,6 +314,39 @@
     </div>
   </div>
 
+
+  <!-- TAB 6: Asignaciones -->
+  <div id="tab6" class="tab-panel">
+    <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin-bottom:24px;">
+      <div class="filter-row" style="margin-bottom:0;">
+        <label>Filtrar por mes (ETA):</label>
+        <select id="filtroMes6" onchange="aplicarFiltros6()">
+          <option value="">Todos los meses</option>
+        </select>
+      </div>
+      <div class="filter-row" style="margin-bottom:0;">
+        <label>Banco:</label>
+        <select id="filtroBanco6" onchange="aplicarFiltros6()">
+          <option value="">Todos los bancos</option>
+        </select>
+      </div>
+    </div>
+    <div class="charts">
+      <div class="card">
+        <div class="card-title">FOB Total por Banco (USD)</div>
+        <div style="position:relative; height:320px;">
+          <canvas id="chartBanco6"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">% FOB por Banco</div>
+        <div style="position:relative; height:320px;">
+          <canvas id="chartPct6"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -321,6 +355,7 @@ const CSV2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7B
 const CSV3 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=574545948&single=true&output=csv';
 const CSV4 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=806576624&single=true&output=csv';
 const CSV5 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=0&single=true&output=csv';
+const CSV6 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=757044906&single=true&output=csv';
 
 const ANALISTAS = ['Luciana', 'Florencia', 'Aymara'];
 const COLORES = {
@@ -339,14 +374,15 @@ function getColorAnalista(nombre) {
   const analista = mapped ? NOMBRE_MAP[mapped] || mapped : null;
   return analista && COLORES[analista] ? COLORES[analista].bg : 'rgba(124,111,247,0.85)';
 }
+const C6 = { fcl: 'FCL', eta: 'ETA', shipper: 'Shipper', fob: 'Moto FOB total', banco: 'Banco Asignado', analista: 'Analista responsable' };
 const C5 = { fcl: 'N° FCL', arribo: 'Fecha de arribo a Aduana', so: 'ID Stock Origen', invoice: 'N° Invoice', fechaInvoice: 'Fecha Invoice', responsable: 'Responsable Commercial Invoice', difDias: 'Diferencia de dias' };
 const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invoice: 'N° Invoice', arribo: 'Fecha de arribo a Aduana', deposito: 'Deposito ZFLP', fobTotal: 'FOB SIMI TOTAL', banco: 'Banco Asignado', shipper: 'Shipper', so: 'ID Stock Origen' };
 const C4 = { embarque: 'Embarque 	', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias' };
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido' };
 
-let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [];
-let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTorta3 = [];
+let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [];
+let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null;
 
 function parseFecha(str) {
   if (!str) return null;
@@ -835,6 +871,120 @@ function aplicarFiltros3() {
   });
 }
 
+// ─── TAB 6 ───
+function poblarFiltros6() {
+  // Meses
+  const meses = new Set();
+  datos6.forEach(r => {
+    const f = parseFecha(r[C6.eta]);
+    if (f && !isNaN(f)) meses.add(`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`);
+  });
+  const selMes = document.getElementById('filtroMes6');
+  const curMes = selMes.value;
+  selMes.innerHTML = '<option value="">Todos los meses</option>';
+  [...meses].sort().reverse().forEach(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(y, mo-1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    selMes.innerHTML += `<option value="${m}" ${curMes===m?'selected':''}>${label.charAt(0).toUpperCase()+label.slice(1)}</option>`;
+  });
+
+  // Bancos
+  const bancos = [...new Set(datos6.map(r => (r[C6.banco]||'').trim()).filter(Boolean))].sort();
+  const selBanco = document.getElementById('filtroBanco6');
+  const curBanco = selBanco.value;
+  selBanco.innerHTML = '<option value="">Todos los bancos</option>';
+  bancos.forEach(b => {
+    selBanco.innerHTML += `<option value="${b}" ${curBanco===b?'selected':''}>${b}</option>`;
+  });
+}
+
+function aplicarFiltros6() {
+  const mes = document.getElementById('filtroMes6').value;
+  const banco = document.getElementById('filtroBanco6').value;
+
+  let d = datos6;
+
+  // Filtrar por mes ETA
+  if (mes) {
+    const [y, mo] = mes.split('-').map(Number);
+    d = d.filter(r => {
+      const f = parseFecha(r[C6.eta]);
+      return f && !isNaN(f) && f.getFullYear() === y && f.getMonth()+1 === mo;
+    });
+  }
+
+  // Filtrar por banco
+  if (banco) {
+    d = d.filter(r => (r[C6.banco]||'').trim() === banco);
+  }
+
+  // Agrupar FOB por banco
+  const bancoMap = {};
+  d.forEach(r => {
+    const b = (r[C6.banco]||'Sin banco').trim();
+    bancoMap[b] = (bancoMap[b]||0) + parsNum(r[C6.fob]);
+  });
+
+  const bancos = Object.keys(bancoMap).sort((a,b) => bancoMap[b] - bancoMap[a]);
+  const valores = bancos.map(b => bancoMap[b]);
+  const total = valores.reduce((s,v) => s+v, 0);
+  const porcentajes = valores.map(v => total > 0 ? parseFloat((v/total*100).toFixed(1)) : 0);
+
+  // Colores celeste para barras
+  const celestes = bancos.map((_, i) => `rgba(56,189,248,${0.9 - i*0.08 < 0.3 ? 0.3 : 0.9 - i*0.08})`);
+  // Colores verde pastel para torta
+  const verdes = bancos.map((_, i) => `rgba(134,200,150,${0.95 - i*0.1 < 0.3 ? 0.3 : 0.95 - i*0.1})`);
+
+  // Gráfico 1 — Barras FOB total
+  if (chartB6) chartB6.destroy();
+  chartB6 = new Chart(document.getElementById('chartBanco6'), {
+    type: 'bar',
+    data: {
+      labels: bancos,
+      datasets: [{
+        label: 'FOB Total (USD)',
+        data: valores,
+        backgroundColor: celestes,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
+        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
+    }
+  });
+
+  // Gráfico 2 — Torta % FOB
+  if (chartP6) chartP6.destroy();
+  chartP6 = new Chart(document.getElementById('chartPct6'), {
+    type: 'doughnut',
+    data: {
+      labels: bancos,
+      datasets: [{
+        data: porcentajes,
+        backgroundColor: verdes,
+        borderColor: '#16181c',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 11 }, boxWidth: 10, padding: 12 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } }
+      },
+      cutout: '55%'
+    }
+  });
+}
+
 // ─── TABS ───
 function cambiarTab(id, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -848,7 +998,7 @@ function actualizarTodo() {
   const btn = document.getElementById('btnActualizar');
   btn.classList.add('loading');
   let done = 0;
-  function check() { if (++done === 5) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
+  function check() { if (++done === 6) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
 
   Papa.parse(CSV1, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datos1 = r.data;
@@ -880,6 +1030,13 @@ function actualizarTodo() {
 
   Papa.parse(CSV5, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datos5 = r.data;
+    check();
+  }, error() { check(); } });
+
+  Papa.parse(CSV6, { download: true, header: true, skipEmptyLines: true, complete(r) {
+    datos6 = r.data;
+    poblarFiltros6();
+    aplicarFiltros6();
     check();
   }, error() { check(); } });
 }
