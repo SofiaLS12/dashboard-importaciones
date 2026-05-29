@@ -1038,25 +1038,56 @@ function aplicarFiltros6() {
     }
   });
 
-  // Gráfico 4 — FOB por Banco detalle (naranja, filtro mes + banco)
-  const naranjasDetalle = bancos.map((_,i) => `rgba(251,146,60,${0.9 - i*0.08 < 0.3 ? 0.3 : 0.9 - i*0.08})`);
+  // Gráfico 4 — Barras apiladas: FOB por Proveedor desglosado por Banco (naranja, filtro mes)
+  // Usar dShipper (solo filtro mes, sin filtro banco)
+  const provBancoMap = {};
+  const bancosSet = new Set();
+  dShipper.forEach(r => {
+    const prov = (r[C6.shipper]||'Sin shipper').trim();
+    const bancoR = (r[C6.banco]||'Sin banco').trim();
+    if (!provBancoMap[prov]) provBancoMap[prov] = {};
+    provBancoMap[prov][bancoR] = (provBancoMap[prov][bancoR]||0) + parsNum(r[C6.fob]);
+    bancosSet.add(bancoR);
+  });
+
+  // Top 10 proveedores por FOB total
+  const provTotales = Object.entries(provBancoMap)
+    .map(([p, bMap]) => [p, Object.values(bMap).reduce((s,v)=>s+v,0)])
+    .sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const provLabels = provTotales.map(e=>e[0]);
+  const bancosAll = [...bancosSet].sort();
+
+  const naranjaPalette = [
+    'rgba(251,146,60,0.9)','rgba(249,115,22,0.85)','rgba(234,88,12,0.8)',
+    'rgba(253,186,116,0.85)','rgba(254,215,170,0.8)','rgba(252,165,82,0.75)',
+    'rgba(251,130,40,0.7)','rgba(248,100,20,0.65)','rgba(245,80,10,0.6)'
+  ];
+
+  const datasetsApilado = bancosAll.map((bancoR, i) => ({
+    label: bancoR,
+    data: provLabels.map(p => provBancoMap[p][bancoR] || 0),
+    backgroundColor: naranjaPalette[i % naranjaPalette.length],
+    borderRadius: 3,
+    stack: 'stack'
+  }));
 
   if (chartBD6) chartBD6.destroy();
   chartBD6 = new Chart(document.getElementById('chartBancoDetalle6'), {
     type: 'bar',
-    data: {
-      labels: bancos,
-      datasets: [{ label: 'FOB Total (USD)', data: valores, backgroundColor: naranjasDetalle, borderRadius: 6 }]
-    },
+    data: { labels: provLabels, datasets: datasetsApilado },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ` $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
+        legend: { display: true, position: 'top', labels: { color: '#8a8f9a', font: { size: 11 }, boxWidth: 10, padding: 10 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}`
+          }
+        }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 12 }, maxRotation: 35 }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        x: { stacked: true, ticks: { color: '#8a8f9a', font: { size: 10 }, maxRotation: 35 }, grid: { display: false } },
+        y: { stacked: true, ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
       }
     }
   });
