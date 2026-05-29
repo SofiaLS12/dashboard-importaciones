@@ -265,11 +265,22 @@
       <div class="kpi teal"><div class="kpi-label">Valor Total Pagado (ARS)</div><div class="kpi-value" id="k3-pagado">—</div></div>
       <div class="kpi amber"><div class="kpi-label">Ahorro Total del Mes (ARS)</div><div class="kpi-value" id="k3-ahorro">—</div></div>
     </div>
-    <div class="filter-row" style="margin-bottom:20px;">
-      <label>Filtrar por mes:</label>
-      <select id="filtroMes3" onchange="aplicarFiltros3()">
-        <option value="">Todos los meses</option>
-      </select>
+    <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
+      <div class="filter-row" style="margin-bottom:0;">
+        <label>Filtrar por mes:</label>
+        <select id="filtroMes3" onchange="aplicarFiltros3()">
+          <option value="">Todos los meses</option>
+        </select>
+      </div>
+      <div class="filter-row" style="margin-bottom:0;">
+        <label>Tipo de comprobante:</label>
+        <select id="filtroTipo3" onchange="aplicarFiltros3()">
+          <option value="">Todos</option>
+          <option value="Factura">Factura</option>
+          <option value="Nota de Debito">Nota de Débito</option>
+          <option value="Nota de Credito">Nota de Crédito</option>
+        </select>
+      </div>
     </div>
     <div class="charts">
       <div class="card">
@@ -285,6 +296,21 @@
         </div>
       </div>
     </div>
+    <!-- Tortas por analista -->
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:16px;">
+      <div class="card">
+        <div class="card-title" style="color:var(--green);">Luciana — por Proveedor</div>
+        <div style="position:relative; height:260px;"><canvas id="chartTorta3_0"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:#b4a0dc;">Florencia — por Proveedor</div>
+        <div style="position:relative; height:260px;"><canvas id="chartTorta3_1"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:#f0d278;">Aymara — por Proveedor</div>
+        <div style="position:relative; height:260px;"><canvas id="chartTorta3_2"></canvas></div>
+      </div>
+    </div>
   </div>
 
 </main>
@@ -294,15 +320,22 @@ const CSV1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7B
 const CSV2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=1418243662&single=true&output=csv';
 const CSV3 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=574545948&single=true&output=csv';
 const CSV4 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=806576624&single=true&output=csv';
+const CSV5 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=0&single=true&output=csv';
 
 const ANALISTAS = ['Luciana', 'Florencia', 'Aymara'];
+const COLORES = {
+  'Luciana':   { bg: 'rgba(240,180,190,0.85)', border: '#f0b4be', light: 'rgba(240,180,190,0.3)' },
+  'Florencia': { bg: 'rgba(180,160,220,0.85)', border: '#b4a0dc', light: 'rgba(180,160,220,0.3)' },
+  'Aymara':    { bg: 'rgba(240,210,120,0.85)', border: '#f0d278', light: 'rgba(240,210,120,0.3)' }
+};
+const C5 = { fcl: 'N° FCL', arribo: 'Fecha de arribo a Aduana', so: 'ID Stock Origen', invoice: 'N° Invoice', fechaInvoice: 'Fecha Invoice', responsable: 'Responsable Commercial Invoice', difDias: 'Diferencia de dias' };
 const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invoice: 'N° Invoice', arribo: 'Fecha de arribo a Aduana', deposito: 'Deposito ZFLP', fobTotal: 'FOB SIMI TOTAL', banco: 'Banco Asignado', shipper: 'Shipper', so: 'ID Stock Origen' };
 const C4 = { embarque: 'Embarque 	', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias' };
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido' };
 
-let datos1 = [], datos2 = [], datos3 = [], datos4 = [];
-let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null;
+let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [];
+let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTorta3 = [];
 
 function parseFecha(str) {
   if (!str) return null;
@@ -372,11 +405,65 @@ function aplicarFiltros1() {
 function renderChartFacturas(d) {
   const c = {}; ANALISTAS.forEach(a => c[a] = new Set());
   d.forEach(r => { const a = getAnalista(r); if (a && r[C1.invoice]) c[a].add(r[C1.invoice]); });
+
+  // Promedio días desde Fecha fc filtrado por mismo mes
+  const mes = document.getElementById('filtroMes1').value;
+  let d5 = datos5;
+  if (mes) {
+    const [y, mo] = mes.split('-').map(Number);
+    d5 = datos5.filter(r => {
+      const f = parseFecha(r[C5.arribo]);
+      return f && f.getFullYear() === y && f.getMonth()+1 === mo;
+    });
+  }
+  const promDias = {};
+  ANALISTAS.forEach(a => {
+    const filas = d5.filter(r => {
+      const resp = (r[C5.responsable]||'').trim();
+      return resp.toLowerCase().includes(a.toLowerCase()) && (r[C5.difDias]||'').trim() !== '';
+    });
+    promDias[a] = filas.length ? filas.reduce((s,r) => s + parsNum(r[C5.difDias]), 0) / filas.length : 0;
+  });
+
   if (chartF) chartF.destroy();
   chartF = new Chart(document.getElementById('chartFacturas'), {
     type: 'bar',
-    data: { labels: ANALISTAS, datasets: [{ data: ANALISTAS.map(a=>c[a].size), backgroundColor: ['rgba(124,111,247,0.85)','rgba(124,111,247,0.65)','rgba(124,111,247,0.45)'], borderRadius: 6 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } }, y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true } } }
+    data: {
+      labels: ANALISTAS,
+      datasets: [
+        {
+          label: 'N° Facturas',
+          data: ANALISTAS.map(a => c[a].size),
+          backgroundColor: ANALISTAS.map(a => COLORES[a].bg),
+          borderRadius: 6,
+          yAxisID: 'y',
+          order: 2
+        },
+        {
+          label: 'Promedio días',
+          data: ANALISTAS.map(a => parseFloat(promDias[a].toFixed(2))),
+          type: 'line',
+          borderColor: '#f06060',
+          backgroundColor: 'rgba(240,96,96,0.1)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#f06060',
+          pointRadius: 5,
+          tension: 0.3,
+          yAxisID: 'y2',
+          order: 1,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#8a8f9a', font: { size: 11 }, boxWidth: 12 } } },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
+        y: { position: 'left', ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, title: { display: true, text: 'Facturas', color: '#8a8f9a', font: { size: 11 } } },
+        y2: { position: 'right', ticks: { color: '#f06060', font: { size: 11 }, callback: v => v.toFixed(1) }, grid: { drawOnChartArea: false }, beginAtZero: true, title: { display: true, text: 'Días', color: '#f06060', font: { size: 11 } } }
+      }
+    }
   });
 }
 
@@ -386,8 +473,15 @@ function renderChartSOs(d) {
   if (chartS) chartS.destroy();
   chartS = new Chart(document.getElementById('chartSOs'), {
     type: 'doughnut',
-    data: { labels: ANALISTAS, datasets: [{ data: ANALISTAS.map(a=>c[a].size), backgroundColor: ['rgba(45,212,176,0.9)','rgba(45,212,176,0.6)','rgba(45,212,176,0.35)'], borderColor: '#16181c', borderWidth: 3 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } } }, cutout: '65%' }
+    data: {
+      labels: ANALISTAS,
+      datasets: [{ data: ANALISTAS.map(a=>c[a].size), backgroundColor: ANALISTAS.map(a => COLORES[a].bg), borderColor: '#16181c', borderWidth: 3 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } } },
+      cutout: '65%'
+    }
   });
 }
 
@@ -644,31 +738,33 @@ function aplicarFiltros4() {
 // ─── TAB 3 ───
 function aplicarFiltros3() {
   const d = filtrarMes(datos3, C3.fecha, 'filtroMes3');
+  const tipoFiltro = (document.getElementById('filtroTipo3')||{value:''}).value.toLowerCase();
 
-  // Tipos
-  const esPago = r => {
-    const t = (r[C3.tipo]||'').toLowerCase();
-    return t.includes('factura') || t.includes('nota de debito') || t.includes('débito');
-  };
-  const esNC = r => (r[C3.tipo]||'').toLowerCase().includes('nota de cr');
+  const matchTipo = (r, tipos) => tipos.some(t => (r[C3.tipo]||'').toLowerCase().includes(t));
+  const esPago = r => matchTipo(r, ['factura', 'nota de debito', 'débito', 'debito']);
+  const esNC   = r => matchTipo(r, ['nota de cr', 'crédito', 'credito']);
 
-  // Tarjetas
+  // Aplicar filtro tipo comprobante
+  const dFiltrado = tipoFiltro
+    ? d.filter(r => (r[C3.tipo]||'').toLowerCase().includes(tipoFiltro))
+    : d;
+
+  // Tarjetas (siempre sin filtro tipo)
   const pagado = d.filter(esPago).reduce((s,r) => s + parsNum(r[C3.monto]), 0);
   const ahorro = d.filter(esNC).reduce((s,r) => s + parsNum(r[C3.monto]), 0);
   document.getElementById('k3-pagado').textContent = '$ ' + Math.abs(pagado).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
   document.getElementById('k3-ahorro').textContent = '$ ' + Math.abs(ahorro).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
-  // Gráfico pagado por analista
-  const analistas = [...new Set(d.map(r => r[C3.responsable]).filter(Boolean))].sort();
-  const datosPagado = analistas.map(a => d.filter(r => r[C3.responsable]===a && esPago(r)).reduce((s,r) => s + parsNum(r[C3.monto]), 0));
-  const datosAhorro = analistas.map(a => d.filter(r => r[C3.responsable]===a && esNC(r)).reduce((s,r) => s + Math.abs(parsNum(r[C3.monto])), 0));
-
-  const colors = ['rgba(124,111,247,0.85)','rgba(45,212,176,0.85)','rgba(245,166,35,0.85)','rgba(240,96,96,0.85)','rgba(55,138,221,0.85)','rgba(99,153,34,0.85)'];
+  // Gráficos barras/donut por analista
+  const analistas = [...new Set(dFiltrado.map(r => r[C3.responsable]).filter(Boolean))].sort();
+  const datosPagado = analistas.map(a => dFiltrado.filter(r => r[C3.responsable]===a && esPago(r)).reduce((s,r) => s + parsNum(r[C3.monto]), 0));
+  const datosAhorro = analistas.map(a => dFiltrado.filter(r => r[C3.responsable]===a && esNC(r)).reduce((s,r) => s + Math.abs(parsNum(r[C3.monto])), 0));
+  const bgColors = analistas.map(a => COLORES[a] ? COLORES[a].bg : 'rgba(124,111,247,0.85)');
 
   if (chartP3) chartP3.destroy();
   chartP3 = new Chart(document.getElementById('chartPagado3'), {
     type: 'bar',
-    data: { labels: analistas, datasets: [{ data: datosPagado, backgroundColor: colors.slice(0, analistas.length), borderRadius: 6 }] },
+    data: { labels: analistas, datasets: [{ data: datosPagado, backgroundColor: bgColors, borderRadius: 6 }] },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } } },
@@ -682,7 +778,7 @@ function aplicarFiltros3() {
   if (chartA3) chartA3.destroy();
   chartA3 = new Chart(document.getElementById('chartAhorro3'), {
     type: 'doughnut',
-    data: { labels: analistas, datasets: [{ data: datosAhorro, backgroundColor: colors.slice(0, analistas.length), borderColor: '#16181c', borderWidth: 3 }] },
+    data: { labels: analistas, datasets: [{ data: datosAhorro, backgroundColor: bgColors, borderColor: '#16181c', borderWidth: 3 }] },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
@@ -691,6 +787,40 @@ function aplicarFiltros3() {
       },
       cutout: '60%'
     }
+  });
+
+  // Tortas por analista — proveedores
+  chartTorta3.forEach(c => c && c.destroy());
+  chartTorta3 = [];
+  ANALISTAS.forEach((analista, idx) => {
+    const filas = dFiltrado.filter(r => (r[C3.responsable]||'').trim() === analista);
+    const provMap = {};
+    filas.forEach(r => {
+      const prov = (r['PROVEEDOR']||'Sin proveedor').trim();
+      provMap[prov] = (provMap[prov]||0) + Math.abs(parsNum(r[C3.monto]));
+    });
+    const sorted = Object.entries(provMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const baseColor = COLORES[analista].bg;
+    const alphas = [0.95,0.8,0.65,0.5,0.4,0.35,0.3,0.25];
+    const rgb = baseColor.match(/[\d.]+/g);
+    const colors = alphas.map(a => `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`);
+
+    const canvas = document.getElementById(`chartTorta3_${idx}`);
+    if (!canvas) return;
+    chartTorta3[idx] = new Chart(canvas, {
+      type: 'pie',
+      data: {
+        labels: sorted.map(e=>e[0]),
+        datasets: [{ data: sorted.map(e=>e[1]), backgroundColor: colors.slice(0,sorted.length), borderColor: '#16181c', borderWidth: 2 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { color: '#8a8f9a', font: { size: 10 }, boxWidth: 10, padding: 8 } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: $ ${ctx.parsed.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
+        }
+      }
+    });
   });
 }
 
@@ -707,7 +837,7 @@ function actualizarTodo() {
   const btn = document.getElementById('btnActualizar');
   btn.classList.add('loading');
   let done = 0;
-  function check() { if (++done === 4) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
+  function check() { if (++done === 5) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
 
   Papa.parse(CSV1, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datos1 = r.data;
@@ -734,6 +864,11 @@ function actualizarTodo() {
     datos4 = r.data;
     poblarMeses4();
     aplicarFiltros4();
+    check();
+  }, error() { check(); } });
+
+  Papa.parse(CSV5, { download: true, header: true, skipEmptyLines: true, complete(r) {
+    datos5 = r.data;
     check();
   }, error() { check(); } });
 }
