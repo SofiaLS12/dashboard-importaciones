@@ -359,6 +359,19 @@
         </div>
       </div>
     </div>
+    <!-- Gráfico FCLs por Analista desde Copia Importaciones2 -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">FCLs únicos por Analista</div>
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+        <label style="font-size:13px; color:var(--text2);">Filtrar por mes (Fecha arribo aduana):</label>
+        <select id="filtroMes6b" onchange="renderChartFCLsAnalista()" style="font-family:var(--font); font-size:13px; background:var(--surface2); border:0.5px solid var(--border2); border-radius:8px; color:var(--text); padding:8px 14px; outline:none; cursor:pointer;">
+          <option value="">Todos los meses</option>
+        </select>
+      </div>
+      <div style="position:relative; height:300px;">
+        <canvas id="chartFCLsAnalista6"></canvas>
+      </div>
+    </div>
   </div>
 
 </main>
@@ -396,7 +409,7 @@ const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Respons
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido' };
 
 let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [];
-let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null;
+let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null;
 
 function parseFecha(str) {
   if (!str) return null;
@@ -1093,6 +1106,81 @@ function aplicarFiltros6() {
   });
 }
 
+// ─── FCLs por Analista (tab6, desde datos1) ───
+function poblarMes6b() {
+  const meses = new Set();
+  datos1.forEach(r => {
+    const f = parseFecha(r[C1.arribo]);
+    if (f && !isNaN(f)) meses.add(`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`);
+  });
+  const sel = document.getElementById('filtroMes6b');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos los meses</option>';
+  [...meses].sort().reverse().forEach(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(y, mo-1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    sel.innerHTML += `<option value="${m}" ${cur===m?'selected':''}>${label.charAt(0).toUpperCase()+label.slice(1)}</option>`;
+  });
+}
+
+function renderChartFCLsAnalista() {
+  const mes = (document.getElementById('filtroMes6b')||{value:''}).value;
+  let d = datos1;
+  if (mes) {
+    const [y, mo] = mes.split('-').map(Number);
+    d = datos1.filter(r => {
+      const f = parseFecha(r[C1.arribo]);
+      return f && f.getFullYear() === y && f.getMonth()+1 === mo;
+    });
+  }
+
+  // Columna BZ = 'Analista Responsable INAL' — buscar key exacta
+  const keyAnalista = datos1.length > 0
+    ? Object.keys(datos1[0]).find(k => k.trim() === 'Analista Responsable INAL') || 'Analista Responsable INAL'
+    : 'Analista Responsable INAL';
+
+  // FCLs únicos por analista, excluir Azul
+  const analistaFCL = {};
+  d.forEach(r => {
+    const analista = (r[keyAnalista]||'').trim();
+    if (!analista || analista.toLowerCase().includes('azul')) return;
+    const fcl = (r[C1.fcl]||'').trim();
+    if (!fcl) return;
+    if (!analistaFCL[analista]) analistaFCL[analista] = new Set();
+    analistaFCL[analista].add(fcl);
+  });
+
+  const analistas = Object.keys(analistaFCL).sort((a,b) => analistaFCL[b].size - analistaFCL[a].size);
+  const valores = analistas.map(a => analistaFCL[a].size);
+  const celestes = analistas.map((_,i) => `rgba(56,189,248,${0.9 - i*0.07 < 0.35 ? 0.35 : 0.9 - i*0.07})`);
+
+  if (chartFA6) chartFA6.destroy();
+  chartFA6 = new Chart(document.getElementById('chartFCLsAnalista6'), {
+    type: 'bar',
+    data: {
+      labels: analistas,
+      datasets: [{
+        label: 'FCLs únicos',
+        data: valores,
+        backgroundColor: celestes,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` FCLs: ${ctx.parsed.y}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
+        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
 // ─── TABS ───
 function cambiarTab(id, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -1112,6 +1200,8 @@ function actualizarTodo() {
     datos1 = r.data;
     poblarMeses(datos1, C1.arribo, 'filtroMes1');
     aplicarFiltros1();
+    poblarMes6b();
+    renderChartFCLsAnalista();
     check();
   }, error() { check(); } });
 
