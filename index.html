@@ -1137,8 +1137,8 @@ function renderChartFCLsAnalista() {
 
   // Columna BZ = 'Analista Responsable INAL' — buscar key exacta
   const keyAnalista = datos1.length > 0
-    ? Object.keys(datos1[0]).find(k => k.trim() === 'Analista Responsable INAL') || 'Analista Responsable INAL'
-    : 'Analista Responsable INAL';
+    ? Object.keys(datos1[0]).find(k => k.trim() === 'Analista Responsable') || 'Analista Responsable'
+    : 'Analista Responsable';
 
   // FCLs únicos por analista, excluir Azul
   const analistaFCL = {};
@@ -1243,4 +1243,3 @@ actualizarTodo();
 </script>
 </body>
 </html>
-
