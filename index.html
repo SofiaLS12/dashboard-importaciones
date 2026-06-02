@@ -360,16 +360,24 @@
       </div>
     </div>
     <!-- Gráfico FCLs por Analista desde Copia Importaciones2 -->
-    <div class="card" style="margin-top:16px;">
-      <div class="card-title">FCLs únicos por Analista</div>
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-        <label style="font-size:13px; color:var(--text2);">Filtrar por mes (Fecha arribo aduana):</label>
-        <select id="filtroMes6b" onchange="renderChartFCLsAnalista()" style="font-family:var(--font); font-size:13px; background:var(--surface2); border:0.5px solid var(--border2); border-radius:8px; color:var(--text); padding:8px 14px; outline:none; cursor:pointer;">
-          <option value="">Todos los meses</option>
-        </select>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
+      <div class="card">
+        <div class="card-title">FCLs únicos por Analista</div>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          <label style="font-size:13px; color:var(--text2);">Filtrar por mes (Fecha arribo aduana):</label>
+          <select id="filtroMes6b" onchange="renderChartFCLsAnalista()" style="font-family:var(--font); font-size:13px; background:var(--surface2); border:0.5px solid var(--border2); border-radius:8px; color:var(--text); padding:8px 14px; outline:none; cursor:pointer;">
+            <option value="">Todos los meses</option>
+          </select>
+        </div>
+        <div style="position:relative; height:300px;">
+          <canvas id="chartFCLsAnalista6"></canvas>
+        </div>
       </div>
-      <div style="position:relative; height:300px;">
-        <canvas id="chartFCLsAnalista6"></canvas>
+      <div class="card">
+        <div class="card-title">SOs por Analista</div>
+        <div style="position:relative; height:300px;">
+          <canvas id="chartSOsAnalista6"></canvas>
+        </div>
       </div>
     </div>
   </div>
@@ -409,7 +417,7 @@ const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Respons
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido' };
 
 let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [];
-let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null;
+let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null, chartSOA6 = null;
 
 function parseFecha(str) {
   if (!str) return null;
@@ -452,6 +460,25 @@ function filtrarMes(datos, colFecha, selectId) {
   });
 }
 
+// ─── MESES COMBINADOS ───
+function poblarMesesCombinado() {
+  const meses = new Set();
+  // Desde datos5: Fecha Invoice (col E)
+  datos5.forEach(r => {
+    const f = parseFecha(r[C5.fechaInvoice]);
+    if (f && !isNaN(f)) meses.add(`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`);
+  });
+  const sel = document.getElementById('filtroMes1');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos los meses</option>';
+  [...meses].sort().reverse().forEach(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(y, mo-1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    sel.innerHTML += `<option value="${m}" ${cur===m?'selected':''}>${label.charAt(0).toUpperCase()+label.slice(1)}</option>`;
+  });
+}
+
 // ─── TAB 1 ───
 function getAnalista(r) {
   const resp = (r[C1.responsable] || '').trim();
@@ -477,19 +504,28 @@ function aplicarFiltros1() {
 }
 
 function renderChartFacturas(d) {
-  const c = {}; ANALISTAS.forEach(a => c[a] = new Set());
-  d.forEach(r => { const a = getAnalista(r); if (a && r[C1.invoice]) c[a].add(r[C1.invoice]); });
-
-  // Promedio días desde Fecha fc filtrado por mismo mes
+  // Usar datos5 (Fecha fc) filtrado por Fecha Invoice según mes seleccionado
   const mes = document.getElementById('filtroMes1').value;
   let d5 = datos5;
   if (mes) {
     const [y, mo] = mes.split('-').map(Number);
     d5 = datos5.filter(r => {
-      const f = parseFecha(r[C5.arribo]);
+      const f = parseFecha(r[C5.fechaInvoice]);
       return f && f.getFullYear() === y && f.getMonth()+1 === mo;
     });
   }
+
+  // Contar N° Invoice únicos por analista (solo Luciana, Florencia, Aymara)
+  const conteo = {};
+  ANALISTAS.forEach(a => conteo[a] = new Set());
+  d5.forEach(r => {
+    const resp = (r[C5.responsable]||'').trim();
+    const analista = ANALISTAS.find(a => resp.toLowerCase().includes(a.toLowerCase()));
+    if (!analista) return;
+    if (r[C5.invoice]) conteo[analista].add(r[C5.invoice]);
+  });
+
+  // Promedio días desde Fecha fc mismo mes
   const promDias = {};
   ANALISTAS.forEach(a => {
     const filas = d5.filter(r => {
@@ -507,7 +543,7 @@ function renderChartFacturas(d) {
       datasets: [
         {
           label: 'N° Facturas',
-          data: ANALISTAS.map(a => c[a].size),
+          data: ANALISTAS.map(a => conteo[a].size),
           backgroundColor: ANALISTAS.map(a => COLORES[a].bg),
           borderRadius: 6,
           yAxisID: 'y',
@@ -542,14 +578,33 @@ function renderChartFacturas(d) {
 }
 
 function renderChartSOs(d) {
-  const c = {}; ANALISTAS.forEach(a => c[a] = new Set());
-  d.forEach(r => { const a = getAnalista(r); if (a && r[C1.so]) c[a].add(r[C1.so]); });
+  // Usar datos5 filtrado por Fecha Invoice según mes seleccionado
+  const mes = document.getElementById('filtroMes1').value;
+  let d5 = datos5;
+  if (mes) {
+    const [y, mo] = mes.split('-').map(Number);
+    d5 = datos5.filter(r => {
+      const f = parseFecha(r[C5.fechaInvoice]);
+      return f && f.getFullYear() === y && f.getMonth()+1 === mo;
+    });
+  }
+
+  // Contar ID Stock Origen únicos por analista (solo Luciana, Florencia, Aymara)
+  const conteo = {};
+  ANALISTAS.forEach(a => conteo[a] = new Set());
+  d5.forEach(r => {
+    const resp = (r[C5.responsable]||'').trim();
+    const analista = ANALISTAS.find(a => resp.toLowerCase().includes(a.toLowerCase()));
+    if (!analista) return;
+    if (r[C5.so]) conteo[analista].add(r[C5.so]);
+  });
+
   if (chartS) chartS.destroy();
   chartS = new Chart(document.getElementById('chartSOs'), {
     type: 'doughnut',
     data: {
       labels: ANALISTAS,
-      datasets: [{ data: ANALISTAS.map(a=>c[a].size), backgroundColor: ANALISTAS.map(a => COLORES[a].bg), borderColor: '#16181c', borderWidth: 3 }]
+      datasets: [{ data: ANALISTAS.map(a => conteo[a].size), backgroundColor: ANALISTAS.map(a => COLORES[a].bg), borderColor: '#16181c', borderWidth: 3 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -1179,6 +1234,38 @@ function renderChartFCLsAnalista() {
       }
     }
   });
+
+  // Torta amarilla: SOs por analista
+  const analistaSO = {};
+  d.forEach(r => {
+    const analista = (r[keyAnalista]||'').trim();
+    if (!analista || analista.toLowerCase().includes('azul')) return;
+    const so = (r[C1.so]||'').trim();
+    if (!so) return;
+    if (!analistaSO[analista]) analistaSO[analista] = new Set();
+    analistaSO[analista].add(so);
+  });
+
+  const analistasSO = Object.keys(analistaSO).sort();
+  const valoresSO = analistasSO.map(a => analistaSO[a].size);
+  const amarillos = analistasSO.map((_,i) => `rgba(240,210,120,${0.95 - i*0.1 < 0.3 ? 0.3 : 0.95 - i*0.1})`);
+
+  if (chartSOA6) chartSOA6.destroy();
+  chartSOA6 = new Chart(document.getElementById('chartSOsAnalista6'), {
+    type: 'doughnut',
+    data: {
+      labels: analistasSO,
+      datasets: [{ data: valoresSO, backgroundColor: amarillos, borderColor: '#16181c', borderWidth: 3 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} SOs` } }
+      },
+      cutout: '55%'
+    }
+  });
 }
 
 // ─── TABS ───
@@ -1228,6 +1315,9 @@ function actualizarTodo() {
 
   Papa.parse(CSV5, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datos5 = r.data;
+    // Repoblar filtro mes1 con fechas de Fecha Invoice también
+    poblarMesesCombinado();
+    aplicarFiltros1();
     check();
   }, error() { check(); } });
 
