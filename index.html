@@ -234,22 +234,35 @@
 
   <!-- TAB 2 -->
   <div id="tab2" class="tab-panel">
-    <!-- Fila 1: 5 tarjetas -->
-    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:12px;">
-      <div class="kpi purple"><div class="kpi-label">Modelos Únicos</div><div class="kpi-value" id="k2-modelos">—</div></div>
+    <!-- Fila 1: 4 tarjetas -->
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:12px;">
       <div class="kpi teal"><div class="kpi-label">Precio Invoice Total (USD)</div><div class="kpi-value" id="k2-precio">—</div></div>
       <div class="kpi amber"><div class="kpi-label">Valor Capturado (USD)</div><div class="kpi-value" id="k2-capturado">—</div></div>
-      <div class="kpi blue"><div class="kpi-label">Marca Propia</div><div class="kpi-value" id="k2-propia">—</div></div>
-      <div class="kpi red"><div class="kpi-label">Marca de Terceros</div><div class="kpi-value" id="k2-terceros">—</div></div>
+      <div class="kpi purple"><div class="kpi-label">Aplicación Total de Estrategia</div><div class="kpi-value" id="k2-aplicacion">—</div></div>
+      <div class="kpi green"><div class="kpi-label">Extra Mile (USD)</div><div class="kpi-value" id="k2-extramile">—</div></div>
     </div>
-    <!-- Fila 2: 6 tarjetas -->
-    <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:24px;">
-      <div class="kpi green"><div class="kpi-label">MP Nuevos</div><div class="kpi-value" id="k2-nuevos">—</div></div>
-      <div class="kpi purple"><div class="kpi-label">MP Repetidos</div><div class="kpi-value" id="k2-repetidos">—</div></div>
+    <!-- Gráfico lineas -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Valor capturado vs Precio Invoice Total por mes (USD)</div>
+      <div style="position:relative; height:300px;">
+        <canvas id="chartLineas2"></canvas>
+      </div>
+    </div>
+    <!-- Fila 2: tarjetas MP + estrategia -->
+    <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:16px;">
+      <div class="kpi blue"><div class="kpi-label">Total Modelos MP</div><div class="kpi-value" id="k2-propia">—</div></div>
+      <div class="kpi red"><div class="kpi-label">Marca de Terceros</div><div class="kpi-value" id="k2-terceros">—</div></div>
+      <div class="kpi green"><div class="kpi-label">Modelos Nuevos MP</div><div class="kpi-value" id="k2-nuevos">—</div></div>
+      <div class="kpi purple"><div class="kpi-label">Modelos Repetidos MP</div><div class="kpi-value" id="k2-repetidos">—</div></div>
       <div class="kpi teal"><div class="kpi-label">% Sub</div><div class="kpi-value" id="k2-sub">—</div></div>
       <div class="kpi amber"><div class="kpi-label">% Sobre</div><div class="kpi-value" id="k2-sobre">—</div></div>
-      <div class="kpi blue"><div class="kpi-label">% Capturado / Invoice</div><div class="kpi-value" id="k2-pct-capturado">—</div></div>
-      <div class="kpi red"><div class="kpi-label">Rdo Total (USD)</div><div class="kpi-value" id="k2-rdo-total">—</div></div>
+    </div>
+    <!-- Gráfico comparativo mes actual vs mes anterior -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Modelos MP: Nuevos y Repetidos — Mes actual vs Mes anterior</div>
+      <div style="position:relative; height:280px;">
+        <canvas id="chartCompMP2"></canvas>
+      </div>
     </div>
     <div class="filter-row">
       <label>Filtrar por mes:</label>
@@ -257,13 +270,7 @@
         <option value="">Todos los meses</option>
       </select>
     </div>
-    <!-- Gráfico de líneas -->
-    <div class="card" style="margin-top:16px;">
-      <div class="card-title">Valor capturado vs Precio Invoice Total por mes (USD)</div>
-      <div style="position:relative; height:300px;">
-        <canvas id="chartLineas2"></canvas>
-      </div>
-    </div>
+
   </div>
 
 
@@ -422,7 +429,7 @@ const C5 = { fcl: 'N° FCL', arribo: 'Fecha de arribo a Aduana', so: 'ID Stock O
 const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invoice: 'N° Invoice', arribo: 'Fecha de arribo a Aduana', deposito: 'Deposito ZFLP', fobTotal: 'FOB SIMI TOTAL', banco: 'Banco Asignado', shipper: 'Shipper', so: 'ID Stock Origen' };
 const C4 = { embarque: 'Embarque 	', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias' };
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
-const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido' };
+const C2 = { modelo: 'Modelo', precio: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido', fobSIMI: 'FOB SIMI con tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD' };
 
 let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [];
 let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTD4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null, chartSOA6 = null;
@@ -649,11 +656,7 @@ function filtrarTabla1() {
 function aplicarFiltros2() {
   const d = filtrarMes(datos2, C2.eta, 'filtroMes2');
 
-  // Modelos únicos
-  const modelosUnicos = new Set(d.map(r => r[C2.modelo]).filter(Boolean)).size;
-  document.getElementById('k2-modelos').textContent = modelosUnicos.toLocaleString();
-
-  // Precio Invoice total
+  // Precio Invoice Total (FOB asignado total)
   const precioTotal = d.reduce((s,r) => s + parsNum(r[C2.precio]), 0);
   document.getElementById('k2-precio').textContent = '$ ' + precioTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
@@ -661,7 +664,15 @@ function aplicarFiltros2() {
   const capturado = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
   document.getElementById('k2-capturado').textContent = '$ ' + capturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
-  // Marca Propia vs Terceros (por modelos únicos)
+  // Aplicación total de estrategia: FOB SIMI con tope * Cantidad
+  const aplicacion = d.reduce((s,r) => s + parsNum(r[C2.fobSIMI]) * parsNum(r[C2.cantidad]), 0);
+  document.getElementById('k2-aplicacion').textContent = '$ ' + aplicacion.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  // Extra Mile: suma Diferencia USD positivos únicamente
+  const extraMile = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v > 0 ? v : 0); }, 0);
+  document.getElementById('k2-extramile').textContent = '$ ' + extraMile.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  // Marca Propia vs Terceros (modelos únicos)
   const modelosMarcaMap = {};
   d.forEach(r => { if (r[C2.modelo]) modelosMarcaMap[r[C2.modelo]] = (r[C2.tipoMarca]||'').trim(); });
   const marcasVals = Object.values(modelosMarcaMap);
@@ -670,16 +681,18 @@ function aplicarFiltros2() {
   document.getElementById('k2-propia').textContent = propia;
   document.getElementById('k2-terceros').textContent = terceros;
 
-  // MP Nuevos y Repetidos (modelos únicos de Marca Propia)
+  // MP Nuevos y Repetidos
   const mpMap = {};
   d.filter(r => (r[C2.tipoMarca]||'').toLowerCase().includes('propia')).forEach(r => {
     if (r[C2.modelo]) mpMap[r[C2.modelo]] = (r[C2.nuevoRepetido]||'').trim();
   });
   const mpVals = Object.values(mpMap);
-  document.getElementById('k2-nuevos').textContent = mpVals.filter(v => v.toLowerCase().includes('nuevo')).length;
-  document.getElementById('k2-repetidos').textContent = mpVals.filter(v => v.toLowerCase().includes('repetido')).length;
+  const nuevos = mpVals.filter(v => v.toLowerCase().includes('nuevo')).length;
+  const repetidos = mpVals.filter(v => v.toLowerCase().includes('repetido')).length;
+  document.getElementById('k2-nuevos').textContent = nuevos;
+  document.getElementById('k2-repetidos').textContent = repetidos;
 
-  // % Sub y % Sobre (promedio de % aplicado por estrategia)
+  // % Sub y % Sobre
   const subRows = d.filter(r => (r[C2.estrategia]||'').toLowerCase().includes('sub'));
   const sobreRows = d.filter(r => (r[C2.estrategia]||'').toLowerCase().includes('sobre'));
   const promSub = subRows.length ? subRows.reduce((s,r) => s + parsNum(r[C2.pctAplicado]), 0) / subRows.length : 0;
@@ -687,16 +700,80 @@ function aplicarFiltros2() {
   document.getElementById('k2-sub').textContent = promSub.toFixed(1) + '%';
   document.getElementById('k2-sobre').textContent = promSobre.toFixed(1) + '%';
 
-  // % Capturado / Invoice
-  const pctCapturado = precioTotal > 0 ? (capturado / precioTotal * 100) : 0;
-  document.getElementById('k2-pct-capturado').textContent = pctCapturado.toFixed(1) + '%';
-
-  // Rdo Total (suma total valor absoluto columna L)
-  const rdoTotal = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
-  document.getElementById('k2-rdo-total').textContent = '$ ' + rdoTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
-
-  // Gráfico de líneas por mes (todos los datos, no filtrados por mes)
+  // Gráfico líneas (todos los meses)
   renderChartLineas();
+
+  // Gráfico comparativo MP nuevos/repetidos mes actual vs mes anterior
+  renderChartCompMP();
+}
+
+function getMPData(mes) {
+  let d = datos2;
+  if (mes) {
+    const [y, mo] = mes.split('-').map(Number);
+    d = datos2.filter(r => {
+      const f = parseFecha(r[C2.eta]);
+      return f && f.getFullYear() === y && f.getMonth()+1 === mo;
+    });
+  }
+  const mpMap = {};
+  d.filter(r => (r[C2.tipoMarca]||'').toLowerCase().includes('propia')).forEach(r => {
+    if (r[C2.modelo]) mpMap[r[C2.modelo]] = (r[C2.nuevoRepetido]||'').trim();
+  });
+  const vals = Object.values(mpMap);
+  return {
+    nuevos: vals.filter(v => v.toLowerCase().includes('nuevo')).length,
+    repetidos: vals.filter(v => v.toLowerCase().includes('repetido')).length
+  };
+}
+
+let chartCompMP = null;
+function renderChartCompMP() {
+  const mes = document.getElementById('filtroMes2').value;
+  let mesAnterior = '';
+  if (mes) {
+    const [y, mo] = mes.split('-').map(Number);
+    const dAnterior = new Date(y, mo-2, 1);
+    mesAnterior = `${dAnterior.getFullYear()}-${String(dAnterior.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  const actual = getMPData(mes);
+  const anterior = getMPData(mesAnterior);
+
+  const labelActual = mes ? new Date(mes.split('-')[0], mes.split('-')[1]-1, 1).toLocaleDateString('es-AR', {month:'long', year:'numeric'}) : 'Todos';
+  const labelAnterior = mesAnterior ? new Date(mesAnterior.split('-')[0], mesAnterior.split('-')[1]-1, 1).toLocaleDateString('es-AR', {month:'long', year:'numeric'}) : 'Mes anterior';
+
+  if (chartCompMP) chartCompMP.destroy();
+  chartCompMP = new Chart(document.getElementById('chartCompMP2'), {
+    type: 'bar',
+    data: {
+      labels: ['Modelos Nuevos MP', 'Modelos Repetidos MP'],
+      datasets: [
+        {
+          label: labelActual,
+          data: [actual.nuevos, actual.repetidos],
+          backgroundColor: 'rgba(124,111,247,0.85)',
+          borderRadius: 6
+        },
+        {
+          label: labelAnterior,
+          data: [anterior.nuevos, anterior.repetidos],
+          backgroundColor: 'rgba(124,111,247,0.35)',
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12 } }
+      },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
+        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
+    }
+  });
 }
 
 let chartL2 = null;
