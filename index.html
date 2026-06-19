@@ -234,11 +234,12 @@
 
   <!-- TAB 2 -->
   <div id="tab2" class="tab-panel">
-    <!-- Fila 1: 3 tarjetas -->
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:12px;">
+    <!-- Fila 1: 4 tarjetas -->
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:12px;">
       <div class="kpi teal"><div class="kpi-label">Precio Invoice Total (USD)</div><div class="kpi-value" id="k2-precio">—</div></div>
       <div class="kpi amber"><div class="kpi-label">Valor Capturado (USD)</div><div class="kpi-value" id="k2-capturado">—</div></div>
       <div class="kpi purple"><div class="kpi-label">Aplicación Total de Estrategia</div><div class="kpi-value" id="k2-aplicacion">—</div></div>
+      <div class="kpi green"><div class="kpi-label">Extra Mile (USD)</div><div class="kpi-value" id="k2-extramile">—</div></div>
     </div>
     <!-- Gráfico lineas -->
     <div class="card" style="margin-bottom:16px;">
@@ -255,17 +256,16 @@
       <div class="kpi green"><div class="kpi-label">Modelos Nuevos MP</div><div class="kpi-value" id="k2-nuevos">—</div></div>
       <div class="kpi purple"><div class="kpi-label">Modelos Repetidos MP</div><div class="kpi-value" id="k2-repetidos">—</div></div>
     </div>
-    <!-- Fila 3: % Sub, % Sobre, Extra Mile -->
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px;">
+    <!-- Fila 3: % Sub, % Sobre -->
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:16px;">
       <div class="kpi teal"><div class="kpi-label">% Sub</div><div class="kpi-value" id="k2-sub">—</div></div>
       <div class="kpi amber"><div class="kpi-label">% Sobre</div><div class="kpi-value" id="k2-sobre">—</div></div>
-      <div class="kpi green"><div class="kpi-label">Extra Mile (USD)</div><div class="kpi-value" id="k2-extramile">—</div></div>
     </div>
-    <!-- Gráfico comparativo mes actual vs mes anterior -->
+    <!-- Gráfico: Modelos repetidos MP sin certificado válido -->
     <div class="card" style="margin-bottom:24px;">
-      <div class="card-title">Modelos MP: Nuevos y Repetidos — Mes actual vs Mes anterior</div>
+      <div class="card-title">Modelos Repetidos MP sin Certificado válido (excluye Cert. 1, 20 y 21)</div>
       <div style="position:relative; height:280px;">
-        <canvas id="chartCompMP2"></canvas>
+        <canvas id="chartCertMP2"></canvas>
       </div>
     </div>
     <div class="filter-row">
@@ -433,7 +433,7 @@ const C5 = { fcl: 'N° FCL', arribo: 'Fecha de arribo a Aduana', so: 'ID Stock O
 const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invoice: 'N° Invoice', arribo: 'Fecha de arribo a Aduana', deposito: 'Deposito ZFLP', fobTotal: 'FOB SIMI TOTAL', banco: 'Banco Asignado', shipper: 'Shipper', so: 'ID Stock Origen' };
 const C4 = { embarque: 'Embarque 	', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias' };
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
-const C2 = { modelo: 'Modelo', precio: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido', fobSIMI: 'FOB SIMI con tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD' };
+const C2 = { modelo: 'Modelo', precio: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido', fobSIMI: 'FOB SIMI con tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2' };
 
 let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [];
 let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTD4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null, chartSOA6 = null;
@@ -712,7 +712,7 @@ function aplicarFiltros2() {
   renderChartLineas();
 
   // Gráfico comparativo MP nuevos/repetidos mes actual vs mes anterior
-  renderChartCompMP();
+  renderChartCertMP(d);
 }
 
 function getMPData(mes) {
@@ -735,54 +735,71 @@ function getMPData(mes) {
   };
 }
 
-let chartCompMP = null;
-function renderChartCompMP() {
-  const mes = document.getElementById('filtroMes2').value;
-  let mesAnterior = '';
-  if (mes) {
-    const [y, mo] = mes.split('-').map(Number);
-    const dAnterior = new Date(y, mo-2, 1);
-    mesAnterior = `${dAnterior.getFullYear()}-${String(dAnterior.getMonth()+1).padStart(2,'0')}`;
+let chartCertMP = null;
+function renderChartCertMP(d) {
+  // Certificados válidos (case insensitive)
+  const CERTS_VALIDOS = ['certificado 1', 'certificado 20', 'certificado 21'];
+  const tieneCertValido = r => {
+    const c1 = (r[C2.cert1]||'').toLowerCase().trim();
+    const c2 = (r[C2.cert2]||'').toLowerCase().trim();
+    return CERTS_VALIDOS.includes(c1) || CERTS_VALIDOS.includes(c2);
+  };
+
+  // Filtrar modelos repetidos de Marca Propia
+  const modelosSinCert = {};
+  d.filter(r =>
+    (r[C2.tipoMarca]||'').toLowerCase().includes('propia') &&
+    (r[C2.nuevoRepetido]||'').toLowerCase().includes('repetido') &&
+    !tieneCertValido(r)
+  ).forEach(r => {
+    if (r[C2.modelo]) modelosSinCert[r[C2.modelo]] = true;
+  });
+
+  const modelos = Object.keys(modelosSinCert).sort();
+  const total = modelos.length;
+
+  if (chartCertMP) chartCertMP.destroy();
+
+  if (total === 0) {
+    // Mostrar mensaje si no hay resultados
+    const canvas = document.getElementById('chartCertMP2');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#8a8f9a';
+    ctx.font = '14px DM Sans';
+    ctx.textAlign = 'center';
+    ctx.fillText('Sin modelos repetidos MP sin certificado válido', canvas.width/2, canvas.height/2);
+    return;
   }
 
-  const actual = getMPData(mes);
-  const anterior = getMPData(mesAnterior);
-
-  const labelActual = mes ? new Date(mes.split('-')[0], mes.split('-')[1]-1, 1).toLocaleDateString('es-AR', {month:'long', year:'numeric'}) : 'Todos';
-  const labelAnterior = mesAnterior ? new Date(mesAnterior.split('-')[0], mesAnterior.split('-')[1]-1, 1).toLocaleDateString('es-AR', {month:'long', year:'numeric'}) : 'Mes anterior';
-
-  if (chartCompMP) chartCompMP.destroy();
-  chartCompMP = new Chart(document.getElementById('chartCompMP2'), {
+  // Gráfico de barras horizontal mostrando cada modelo
+  chartCertMP = new Chart(document.getElementById('chartCertMP2'), {
     type: 'bar',
     data: {
-      labels: ['Modelos Nuevos MP', 'Modelos Repetidos MP'],
-      datasets: [
-        {
-          label: labelActual,
-          data: [actual.nuevos, actual.repetidos],
-          backgroundColor: 'rgba(124,111,247,0.85)',
-          borderRadius: 6
-        },
-        {
-          label: labelAnterior,
-          data: [anterior.nuevos, anterior.repetidos],
-          backgroundColor: 'rgba(124,111,247,0.35)',
-          borderRadius: 6
-        }
-      ]
+      labels: modelos,
+      datasets: [{
+        label: 'Sin certificado válido',
+        data: modelos.map(() => 1),
+        backgroundColor: 'rgba(240,96,96,0.8)',
+        borderRadius: 4
+      }]
     },
     options: {
+      indexAxis: 'y',
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12 } }
+        legend: { display: false },
+        tooltip: { callbacks: { label: () => 'Sin certificado válido' } },
+        title: { display: true, text: `Total: ${total} modelo${total!==1?'s':''} sin certificado válido`, color: '#f06060', font: { size: 13 } }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        x: { display: false, max: 1.5 },
+        y: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { display: false } }
       }
     }
   });
 }
+
 
 let chartL2 = null;
 function renderChartLineas() {
