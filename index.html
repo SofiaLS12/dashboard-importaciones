@@ -291,6 +291,32 @@
         <canvas id="chartCertMP2"></canvas>
       </div>
     </div>
+    <!-- Accionables -->
+    <div class="card">
+      <div class="card-title">Accionables</div>
+      <div class="charts">
+        <div>
+          <p style="font-size:13px; font-weight:500; color:var(--red); margin-bottom:10px;">Modelos Repetidos MP — Sin certificado</p>
+          <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
+            <table>
+              <thead><tr><th>Modelo</th></tr></thead>
+              <tbody id="tbodySinCert2"></tbody>
+            </table>
+          </div>
+          <p class="conteo" id="conteoSinCert2"></p>
+        </div>
+        <div>
+          <p style="font-size:13px; font-weight:500; color:var(--teal); margin-bottom:10px;">Modelos Repetidos MP — Con certificado</p>
+          <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
+            <table>
+              <thead><tr><th>Modelo</th></tr></thead>
+              <tbody id="tbodyConCert2"></tbody>
+            </table>
+          </div>
+          <p class="conteo" id="conteoConCert2"></p>
+        </div>
+      </div>
+    </div>
   </div>
 
 
@@ -769,7 +795,7 @@ function aplicarFiltros2() {
 
   // Gráficos líneas (todos los meses)
   renderChartLineas();
-  renderChartLineas2b();
+  renderChartLineas2b(d);
 
   // Tortas
   renderTortaMarca(propia, terceros);
@@ -780,51 +806,43 @@ function aplicarFiltros2() {
 }
 
 let chartL2b = null;
-function renderChartLineas2b() {
-  const mesMap = {};
-  datos2.forEach(r => {
-    const f = parseFecha(r[C2.eta]);
-    if (!f || isNaN(f)) return;
-    const key = `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`;
-    if (!mesMap[key]) mesMap[key] = { capturado: 0, noCapturado: 0 };
-    const v = parsNum(r[C2.difUSD]);
-    if (v > 0) mesMap[key].capturado += v;
-    if (v < 0) mesMap[key].noCapturado += Math.abs(v);
-  });
-  const meses = Object.keys(mesMap).sort();
-  const labels = meses.map(m => {
-    const [y, mo] = m.split('-');
-    const l = new Date(y, mo-1, 1).toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
-    return l.charAt(0).toUpperCase() + l.slice(1);
-  });
-  const capturadoArr = meses.map(m => mesMap[m].capturado);
-  const noCapturadoArr = meses.map(m => mesMap[m].noCapturado);
-  const esperadoArr = meses.map((m,i) => capturadoArr[i] + noCapturadoArr[i]);
+function renderChartLineas2b(d) {
+  const capturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v > 0 ? v : 0); }, 0);
+  const noCapturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
+  const esperado = capturado + noCapturado;
+
+  const mes = document.getElementById('filtroMes2').value;
+  const label = mes
+    ? new Date(mes.split('-')[0], mes.split('-')[1]-1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
+    : 'Todos los meses';
+  const labelCap = label.charAt(0).toUpperCase() + label.slice(1);
 
   if (chartL2b) chartL2b.destroy();
   chartL2b = new Chart(document.getElementById('chartLineas2b'), {
-    type: 'line',
+    type: 'bar',
     data: {
-      labels,
+      labels: [labelCap],
       datasets: [
         {
           label: 'Valor Esperado por Capturar (USD)',
-          data: esperadoArr,
-          borderColor: '#8a8f9a', backgroundColor: 'transparent',
-          borderWidth: 2, borderDash: [6,4],
-          pointRadius: 3, pointBackgroundColor: '#8a8f9a', tension: 0.3, fill: false
+          data: [esperado],
+          backgroundColor: 'rgba(138,143,154,0.5)',
+          borderColor: '#8a8f9a',
+          borderWidth: 2,
+          borderDash: [6,4],
+          borderRadius: 6
         },
         {
           label: 'Valor Capturado (USD)',
-          data: capturadoArr,
-          borderColor: '#2dd4b0', backgroundColor: 'rgba(45,212,176,0.1)',
-          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#2dd4b0', tension: 0.3, fill: true
+          data: [capturado],
+          backgroundColor: 'rgba(45,212,176,0.85)',
+          borderRadius: 6
         },
         {
           label: 'Valor NO Capturado (USD)',
-          data: noCapturadoArr,
-          borderColor: '#f06060', backgroundColor: 'rgba(240,96,96,0.1)',
-          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#f06060', tension: 0.3, fill: true
+          data: [noCapturado],
+          backgroundColor: 'rgba(240,96,96,0.85)',
+          borderRadius: 6
         }
       ]
     },
@@ -835,7 +853,7 @@ function renderChartLineas2b() {
         tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
         y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
       }
     }
@@ -903,6 +921,25 @@ function renderChartCertMP(d) {
   const valores = Object.values(modelosRepMP);
   const sinCert = valores.filter(v => v === true).length;
   const conCert = valores.filter(v => v === false).length;
+
+  // Listas de modelos para Accionables
+  const listaSinCert = Object.entries(modelosRepMP).filter(([m,v]) => v === true).map(([m]) => m).sort();
+  const listaConCert = Object.entries(modelosRepMP).filter(([m,v]) => v === false).map(([m]) => m).sort();
+
+  const tbodySin = document.getElementById('tbodySinCert2');
+  const tbodyCon = document.getElementById('tbodyConCert2');
+  if (tbodySin) {
+    tbodySin.innerHTML = listaSinCert.length
+      ? listaSinCert.map(m => `<tr><td class="primary">${m}</td></tr>`).join('')
+      : '<tr><td style="color:var(--text3);">Sin resultados</td></tr>';
+    document.getElementById('conteoSinCert2').textContent = `${listaSinCert.length} modelo${listaSinCert.length!==1?'s':''}`;
+  }
+  if (tbodyCon) {
+    tbodyCon.innerHTML = listaConCert.length
+      ? listaConCert.map(m => `<tr><td class="primary">${m}</td></tr>`).join('')
+      : '<tr><td style="color:var(--text3);">Sin resultados</td></tr>';
+    document.getElementById('conteoConCert2').textContent = `${listaConCert.length} modelo${listaConCert.length!==1?'s':''}`;
+  }
 
   if (chartCertMP) chartCertMP.destroy();
   chartCertMP = new Chart(document.getElementById('chartCertMP2'), {
