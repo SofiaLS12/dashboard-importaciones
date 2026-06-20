@@ -234,9 +234,13 @@
 
   <!-- TAB 2 -->
   <div id="tab2" class="tab-panel">
-    <!-- Fila 1: 4 tarjetas -->
-    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:12px;">
+    <!-- Fila 1: Precio Invoice + FOB asignado -->
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:12px;">
       <div class="kpi teal"><div class="kpi-label">Precio Invoice Total (USD)</div><div class="kpi-value" id="k2-precio">—</div></div>
+      <div class="kpi blue"><div class="kpi-label">FOB Asignado Total (USD)</div><div class="kpi-value" id="k2-fobasignado">—</div></div>
+    </div>
+    <!-- Fila 2: Capturado, Extra Mile, No Capturado -->
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:12px;">
       <div class="kpi amber"><div class="kpi-label">Valor Capturado (USD)</div><div class="kpi-value" id="k2-capturado">—</div></div>
       <div class="kpi green"><div class="kpi-label">Extra Mile (USD)</div><div class="kpi-value" id="k2-extramile">—</div></div>
       <div class="kpi red"><div class="kpi-label">Valor NO Capturado (USD)</div><div class="kpi-value" id="k2-nocapturado">—</div></div>
@@ -475,7 +479,7 @@ const C5 = { fcl: 'N° FCL', arribo: 'Fecha de arribo a Aduana', so: 'ID Stock O
 const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invoice: 'N° Invoice', arribo: 'Fecha de arribo a Aduana', deposito: 'Deposito ZFLP', fobTotal: 'FOB SIMI TOTAL', banco: 'Banco Asignado', shipper: 'Shipper', so: 'ID Stock Origen' };
 const C4 = { embarque: 'Embarque 	', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias' };
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
-const C2 = { modelo: 'Modelo', precio: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido', fobSIMI: 'FOB SIMI con tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2' };
+const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o repetido', fobSIMI: 'FOB SIMI con tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2' };
 
 let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [];
 let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTD4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null, chartSOA6 = null;
@@ -756,6 +760,10 @@ function aplicarFiltros2() {
   // Precio Invoice Total (FOB asignado total)
   const precioTotal = d.reduce((s,r) => s + parsNum(r[C2.precio]), 0);
   document.getElementById('k2-precio').textContent = '$ ' + precioTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  // FOB Asignado Total (columna J)
+  const fobAsignadoTotal = d.reduce((s,r) => s + parsNum(r[C2.fobAsignado]), 0);
+  document.getElementById('k2-fobasignado').textContent = '$ ' + fobAsignadoTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
   // Valor capturado
   const capturado = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
