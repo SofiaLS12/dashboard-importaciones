@@ -815,7 +815,8 @@ function aplicarFiltros2() {
 
 let chartL2b = null;
 function renderChartLineas2b(d) {
-  const capturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v > 0 ? v : 0); }, 0);
+  // Mismas fórmulas que las tarjetas: Capturado = columna L (Valor Absoluto), No Capturado = abs(negativos de columna T)
+  const capturado = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
   const noCapturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
   const esperado = capturado + noCapturado;
 
