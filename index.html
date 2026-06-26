@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -777,9 +778,7 @@ function aplicarFiltros2() {
   const noCapturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
   document.getElementById('k2-nocapturado').textContent = '$ ' + noCapturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
-  // Total Modelos: contar celdas con dato en columna P (Nuevo o repetido)
-  const totalModelos = d.filter(r => (r[C2.nuevoRepetido]||'').trim() !== '').length;
-  document.getElementById('k2-totalmodelos').textContent = totalModelos.toLocaleString();
+  // Total Modelos = Total Modelos MP + Marca de Terceros (calculado después de tener propia y terceros)
 
   // Marca Propia vs Terceros (modelos únicos)
   const modelosMarcaMap = {};
@@ -787,6 +786,8 @@ function aplicarFiltros2() {
   const marcasVals = Object.values(modelosMarcaMap);
   const propia = marcasVals.filter(m => m.toLowerCase().includes('propia')).length;
   const terceros = marcasVals.filter(m => m.toLowerCase().includes('tercero')).length;
+  const totalModelos = propia + terceros;
+  document.getElementById('k2-totalmodelos').textContent = totalModelos.toLocaleString();
   document.getElementById('k2-propia').textContent = propia;
   document.getElementById('k2-terceros').textContent = terceros;
 
@@ -855,11 +856,17 @@ function renderChartLineas2b(d) {
         }
       ]
     },
+    plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } },
+        datalabels: {
+          anchor: 'end', align: 'top',
+          color: '#f0f0f0', font: { size: 11, weight: '500' },
+          formatter: v => v > 0 ? '$ ' + (v/1000).toFixed(0) + 'k' : ''
+        }
       },
       scales: {
         x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
@@ -878,11 +885,19 @@ function renderTortaMarca(propia, terceros) {
       labels: ['Marca Propia', 'Marca de Terceros'],
       datasets: [{ data: [propia, terceros], backgroundColor: ['rgba(124,111,247,0.85)','rgba(240,96,96,0.75)'], borderColor: '#16181c', borderWidth: 3 }]
     },
+    plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
-        tooltip: { callbacks: { label: ctx => { const total = propia+terceros; const pct = total ? (ctx.parsed/total*100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`; } } }
+        tooltip: { callbacks: { label: ctx => { const total = propia+terceros; const pct = total ? (ctx.parsed/total*100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`; } } },
+        datalabels: {
+          color: '#fff', font: { size: 12, weight: '600' },
+          formatter: (v, ctx) => {
+            const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+            return total ? Math.round(v/total*100) + '%' : '';
+          }
+        }
       },
       cutout: '55%'
     }
@@ -898,11 +913,19 @@ function renderTortaNR(nuevos, repetidos) {
       labels: ['Modelos Nuevos MP', 'Modelos Repetidos MP'],
       datasets: [{ data: [nuevos, repetidos], backgroundColor: ['rgba(45,212,176,0.85)','rgba(245,166,35,0.8)'], borderColor: '#16181c', borderWidth: 3 }]
     },
+    plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
-        tooltip: { callbacks: { label: ctx => { const total = nuevos+repetidos; const pct = total ? (ctx.parsed/total*100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`; } } }
+        tooltip: { callbacks: { label: ctx => { const total = nuevos+repetidos; const pct = total ? (ctx.parsed/total*100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`; } } },
+        datalabels: {
+          color: '#fff', font: { size: 12, weight: '600' },
+          formatter: (v, ctx) => {
+            const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+            return total ? Math.round(v/total*100) + '%' : '';
+          }
+        }
       },
       cutout: '55%'
     }
@@ -961,11 +984,17 @@ function renderChartCertMP(d) {
         borderRadius: 6
       }]
     },
+    plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.y} modelos` } }
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.y} modelos` } },
+        datalabels: {
+          anchor: 'end', align: 'top',
+          color: '#f0f0f0', font: { size: 13, weight: '600' },
+          formatter: v => v > 0 ? v : ''
+        }
       },
       scales: {
         x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
