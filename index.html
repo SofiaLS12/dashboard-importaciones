@@ -579,7 +579,8 @@ let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null
 
 function parseFecha(str) {
   if (!str) return null;
-  const parts = str.split('/');
+  const soloFecha = str.toString().trim().split(' ')[0];
+  const parts = soloFecha.split('/');
   if (parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]);
   return new Date(str);
 }
