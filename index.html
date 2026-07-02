@@ -323,6 +323,13 @@
         </div>
       </div>
     </div>
+    <!-- Valor NO Capturado por certificado -->
+    <div class="card" style="margin-top:24px;">
+      <div class="card-title">Valor NO Capturado — Modelos Repetidos MP: Sin vs Con Certificado (USD)</div>
+      <div style="position:relative; height:300px;">
+        <canvas id="chartNoCapturadoCert2"></canvas>
+      </div>
+    </div>
   </div>
 
 
@@ -1066,6 +1073,7 @@ function renderTortaNR(nuevos, repetidos) {
 }
 
 let chartCertMP = null;
+let chartNoCapCert2 = null;
 function renderChartCertMP(d) {
   const CERTS_SIN = ['certificado 21', 'certificado 20', 'certificado 1'];
   const esSinCert = r => {
@@ -1132,6 +1140,50 @@ function renderChartCertMP(d) {
       scales: {
         x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
         y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
+    }
+  });
+
+  // Valor NO Capturado (USD) sumado por TODAS las filas de los modelos listados en Accionables
+  const setSinCert = new Set(listaSinCert);
+  const setConCert = new Set(listaConCert);
+  let valorNoCapSin = 0, valorNoCapCon = 0;
+  d.forEach(r => {
+    const modelo = r[C2.modelo];
+    if (!modelo) return;
+    const v = parsNum(r[C2.difUSD]);
+    if (v >= 0) return; // solo no capturado (negativos)
+    const abs = Math.abs(v);
+    if (setSinCert.has(modelo)) valorNoCapSin += abs;
+    else if (setConCert.has(modelo)) valorNoCapCon += abs;
+  });
+
+  if (chartNoCapCert2) chartNoCapCert2.destroy();
+  chartNoCapCert2 = new Chart(document.getElementById('chartNoCapturadoCert2'), {
+    type: 'bar',
+    data: {
+      labels: ['Sin Certificado', 'Con Otro Certificado'],
+      datasets: [{
+        data: [valorNoCapSin, valorNoCapCon],
+        backgroundColor: ['rgba(240,96,96,0.85)', 'rgba(45,212,176,0.85)'],
+        borderRadius: 6
+      }]
+    },
+    plugins: [ChartDataLabels],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } },
+        datalabels: {
+          anchor: 'end', align: 'top',
+          color: '#f0f0f0', font: { size: 13, weight: '600' },
+          formatter: v => v > 0 ? '$ ' + v.toLocaleString('es-AR', {maximumFractionDigits:0}) : ''
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
+        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
       }
     }
   });
