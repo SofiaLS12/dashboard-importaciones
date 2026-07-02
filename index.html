@@ -153,6 +153,7 @@
   <button class="tab-btn" onclick="cambiarTab('tab2', this)">Estrategia de Declaración Global</button>
   <button class="tab-btn" onclick="cambiarTab('tab3', this)">Gestión Proveedores</button>
   <button class="tab-btn" onclick="cambiarTab('tab6', this)">Asignaciones</button>
+  <button class="tab-btn" onclick="cambiarTab('tab7', this)">Weekly Estrategia</button>
 </nav>
 
 <main>
@@ -448,6 +449,97 @@
     </div>
   </div>
 
+  <!-- TAB 7: Weekly Estrategia -->
+  <div id="tab7" class="tab-panel">
+    <!-- Fila 1: Precio Invoice + FOB asignado -->
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:12px;">
+      <div class="kpi teal"><div class="kpi-label">Precio Invoice Total (USD)</div><div class="kpi-value" id="k7-precio">—</div></div>
+      <div class="kpi blue"><div class="kpi-label">FOB Asignado Total (USD)</div><div class="kpi-value" id="k7-fobasignado">—</div></div>
+    </div>
+    <!-- Fila 2: Capturado, Extra Mile, No Capturado -->
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:12px;">
+      <div class="kpi amber"><div class="kpi-label">Valor Capturado (USD)</div><div class="kpi-value" id="k7-capturado">—</div></div>
+      <div class="kpi green"><div class="kpi-label">Extra Mile (USD)</div><div class="kpi-value" id="k7-extramile">—</div></div>
+      <div class="kpi red"><div class="kpi-label">Valor NO Capturado (USD)</div><div class="kpi-value" id="k7-nocapturado">—</div></div>
+    </div>
+    <div class="filter-row">
+      <label>Filtrar por semana:</label>
+      <select id="filtroSemana7" onchange="aplicarFiltros7()">
+        <option value="">Todas las semanas</option>
+      </select>
+    </div>
+    <!-- Gráfico líneas 1 -->
+    <div class="card" style="margin-top:16px; margin-bottom:16px;">
+      <div class="card-title">Valor capturado vs Precio Invoice Total por semana (USD)</div>
+      <div style="position:relative; height:300px;">
+        <canvas id="chartLineas7"></canvas>
+      </div>
+    </div>
+    <!-- Gráfico líneas 2 -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Valor Esperado por Capturar — Capturado vs No Capturado por semana (USD)</div>
+      <div style="position:relative; height:300px;">
+        <canvas id="chartLineas7b"></canvas>
+      </div>
+    </div>
+    <!-- Fila 2: tarjetas modelos -->
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:24px;">
+      <div class="kpi purple"><div class="kpi-label">Total Modelos</div><div class="kpi-value" id="k7-totalmodelos">—</div></div>
+      <div class="kpi blue"><div class="kpi-label">Total Modelos MP</div><div class="kpi-value" id="k7-propia">—</div></div>
+      <div class="kpi red"><div class="kpi-label">Marca de Terceros</div><div class="kpi-value" id="k7-terceros">—</div></div>
+      <div class="kpi green"><div class="kpi-label">Modelos Nuevos MP</div><div class="kpi-value" id="k7-nuevos">—</div></div>
+      <div class="kpi purple"><div class="kpi-label">Modelos Repetidos MP</div><div class="kpi-value" id="k7-repetidos">—</div></div>
+    </div>
+    <!-- Tortas -->
+    <div class="charts" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-title">% Marca Propia vs Terceros (sobre Total Modelos)</div>
+        <div style="position:relative; height:280px;">
+          <canvas id="chartTortaMarca7"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">% Nuevos vs Repetidos (sobre Total Modelos MP)</div>
+        <div style="position:relative; height:280px;">
+          <canvas id="chartTortaNR7"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- Gráfico certificados -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Modelos Repetidos MP — Con vs Sin Certificado (1, 20, 21)</div>
+      <div style="position:relative; height:280px;">
+        <canvas id="chartCertMP7"></canvas>
+      </div>
+    </div>
+    <!-- Accionables -->
+    <div class="card">
+      <div class="card-title">Accionables</div>
+      <div class="charts">
+        <div>
+          <p style="font-size:13px; font-weight:500; color:var(--red); margin-bottom:10px;">Modelos Repetidos MP — Sin certificado</p>
+          <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
+            <table>
+              <thead><tr><th>Modelo</th></tr></thead>
+              <tbody id="tbodySinCert7"></tbody>
+            </table>
+          </div>
+          <p class="conteo" id="conteoSinCert7"></p>
+        </div>
+        <div>
+          <p style="font-size:13px; font-weight:500; color:var(--teal); margin-bottom:10px;">Modelos Repetidos MP — Con certificado</p>
+          <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
+            <table>
+              <thead><tr><th>Modelo</th></tr></thead>
+              <tbody id="tbodyConCert7"></tbody>
+            </table>
+          </div>
+          <p class="conteo" id="conteoConCert7"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <script>
@@ -480,7 +572,7 @@ const C5 = { fcl: 'N° FCL', arribo: 'Fecha de arribo a Aduana', so: 'ID Stock O
 const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invoice: 'N° Invoice', arribo: 'Fecha de arribo a Aduana', deposito: 'Deposito ZFLP', fobTotal: 'FOB SIMI TOTAL', banco: 'Banco Asignado', shipper: 'Shipper', so: 'ID Stock Origen' };
 const C4 = { embarque: 'Embarque 	', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias' };
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
-const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o Repetido', fobSIMI: 'FOB SIMI TOTAL C/Tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2' };
+const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o Repetido', fobSIMI: 'FOB SIMI TOTAL C/Tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2', fechaMigracion: 'Fecha Migración' };
 
 let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [];
 let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTD4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null, chartSOA6 = null;
@@ -523,6 +615,46 @@ function filtrarMes(datos, colFecha, selectId) {
   return datos.filter(r => {
     const f = parseFecha(r[colFecha]);
     return f && f.getFullYear() === y && f.getMonth()+1 === mo;
+  });
+}
+
+// ─── SEMANAS (ISO) ───
+function getSemana(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return { year: d.getUTCFullYear(), week };
+}
+
+function claveSemana(date) {
+  const { year, week } = getSemana(date);
+  return `${year}-W${String(week).padStart(2,'0')}`;
+}
+
+function poblarSemanas(datos, colFecha, selectId) {
+  const semanas = new Set();
+  datos.forEach(r => {
+    const f = parseFecha(r[colFecha]);
+    if (f && !isNaN(f)) semanas.add(claveSemana(f));
+  });
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todas las semanas</option>';
+  [...semanas].sort().reverse().forEach(s => {
+    const [y, w] = s.split('-W');
+    sel.innerHTML += `<option value="${s}" ${cur===s?'selected':''}>Semana ${parseInt(w,10)} - ${y}</option>`;
+  });
+}
+
+function filtrarSemana(datos, colFecha, selectId) {
+  const sem = document.getElementById(selectId).value;
+  if (!sem) return datos;
+  return datos.filter(r => {
+    const f = parseFecha(r[colFecha]);
+    return f && !isNaN(f) && claveSemana(f) === sem;
   });
 }
 
@@ -975,6 +1107,283 @@ function renderChartCertMP(d) {
 
   if (chartCertMP) chartCertMP.destroy();
   chartCertMP = new Chart(document.getElementById('chartCertMP2'), {
+    type: 'bar',
+    data: {
+      labels: ['Sin Certificado', 'Con Otro Certificado'],
+      datasets: [{
+        data: [sinCert, conCert],
+        backgroundColor: ['rgba(240,96,96,0.85)', 'rgba(45,212,176,0.85)'],
+        borderRadius: 6
+      }]
+    },
+    plugins: [ChartDataLabels],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.y} modelos` } },
+        datalabels: {
+          anchor: 'end', align: 'top',
+          color: '#f0f0f0', font: { size: 13, weight: '600' },
+          formatter: v => v > 0 ? v : ''
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
+        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+// ─── TAB 7: WEEKLY ESTRATEGIA (mismo cálculo que TAB 2 pero filtrado por semana según Fecha Migración) ───
+let chartL7 = null;
+function renderChartLineas7() {
+  const semMap = {};
+  datos2.forEach(r => {
+    const f = parseFecha(r[C2.fechaMigracion]);
+    if (!f || isNaN(f)) return;
+    const key = claveSemana(f);
+    if (!semMap[key]) semMap[key] = { precio: 0, capturado: 0 };
+    semMap[key].precio += parsNum(r[C2.precio]);
+    semMap[key].capturado += parsNum(r[C2.valorAbs]);
+  });
+  const semanas = Object.keys(semMap).sort();
+  const labels = semanas.map(s => 'Sem ' + parseInt(s.split('-W')[1],10) + " '" + s.split('-W')[0].slice(-2));
+  if (chartL7) chartL7.destroy();
+  chartL7 = new Chart(document.getElementById('chartLineas7'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Precio Invoice Total (USD)',
+          data: semanas.map(s => semMap[s].precio),
+          borderColor: '#7c6ff7', backgroundColor: 'rgba(124,111,247,0.1)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#7c6ff7', tension: 0.3, fill: true
+        },
+        {
+          label: 'Valor Capturado (USD)',
+          data: semanas.map(s => semMap[s].capturado),
+          borderColor: '#2dd4b0', backgroundColor: 'rgba(45,212,176,0.1)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#2dd4b0', tension: 0.3, fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function aplicarFiltros7() {
+  const d = filtrarSemana(datos2, C2.fechaMigracion, 'filtroSemana7');
+
+  const precioTotal = d.reduce((s,r) => s + parsNum(r[C2.precio]), 0);
+  document.getElementById('k7-precio').textContent = '$ ' + precioTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const fobAsignadoTotal = d.reduce((s,r) => s + parsNum(r[C2.fobAsignado]), 0);
+  document.getElementById('k7-fobasignado').textContent = '$ ' + fobAsignadoTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const capturado = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
+  document.getElementById('k7-capturado').textContent = '$ ' + capturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const extraMile = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v > 0 ? v : 0); }, 0);
+  document.getElementById('k7-extramile').textContent = '$ ' + extraMile.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const noCapturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
+  document.getElementById('k7-nocapturado').textContent = '$ ' + noCapturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const modelosMarcaMap = {};
+  d.forEach(r => { if (r[C2.modelo]) modelosMarcaMap[r[C2.modelo]] = (r[C2.tipoMarca]||'').trim(); });
+  const marcasVals = Object.values(modelosMarcaMap);
+  const propia = marcasVals.filter(m => m.toLowerCase().includes('propia')).length;
+  const terceros = marcasVals.filter(m => m.toLowerCase().includes('tercero')).length;
+  const totalModelos = propia + terceros;
+  document.getElementById('k7-totalmodelos').textContent = totalModelos.toLocaleString();
+  document.getElementById('k7-propia').textContent = propia;
+  document.getElementById('k7-terceros').textContent = terceros;
+
+  const mpMap = {};
+  d.filter(r => (r[C2.tipoMarca]||'').toLowerCase().includes('propia')).forEach(r => {
+    if (r[C2.modelo]) mpMap[r[C2.modelo]] = (r[C2.nuevoRepetido]||'').trim();
+  });
+  const mpVals = Object.values(mpMap);
+  const nuevos = mpVals.filter(v => v.toLowerCase().includes('nuevo')).length;
+  const repetidos = mpVals.filter(v => v.toLowerCase().includes('repetido')).length;
+  document.getElementById('k7-nuevos').textContent = nuevos;
+  document.getElementById('k7-repetidos').textContent = repetidos;
+
+  renderChartLineas7();
+  renderChartLineas7b(d);
+  renderTortaMarca7(propia, terceros);
+  renderTortaNR7(nuevos, repetidos);
+  renderChartCertMP7(d);
+}
+
+let chartL7b = null;
+function renderChartLineas7b(d) {
+  const capturado = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
+  const noCapturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
+  const esperado = capturado + noCapturado;
+
+  const sem = document.getElementById('filtroSemana7').value;
+  const labelCap = sem ? `Semana ${parseInt(sem.split('-W')[1],10)} - ${sem.split('-W')[0]}` : 'Todas las semanas';
+
+  if (chartL7b) chartL7b.destroy();
+  chartL7b = new Chart(document.getElementById('chartLineas7b'), {
+    type: 'bar',
+    data: {
+      labels: [labelCap],
+      datasets: [
+        {
+          label: 'Valor Esperado por Capturar (USD)',
+          data: [esperado],
+          backgroundColor: 'rgba(138,143,154,0.5)',
+          borderColor: '#8a8f9a',
+          borderWidth: 2,
+          borderDash: [6,4],
+          borderRadius: 6
+        },
+        {
+          label: 'Valor Capturado (USD)',
+          data: [capturado],
+          backgroundColor: 'rgba(45,212,176,0.85)',
+          borderRadius: 6
+        },
+        {
+          label: 'Valor NO Capturado (USD)',
+          data: [noCapturado],
+          backgroundColor: 'rgba(240,96,96,0.85)',
+          borderRadius: 6
+        }
+      ]
+    },
+    plugins: [ChartDataLabels],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } },
+        datalabels: {
+          anchor: 'end', align: 'top',
+          color: '#f0f0f0', font: { size: 11, weight: '500' },
+          formatter: v => v > 0 ? '$ ' + (v/1000).toFixed(0) + 'k' : ''
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
+        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+let chartTM7 = null;
+function renderTortaMarca7(propia, terceros) {
+  if (chartTM7) chartTM7.destroy();
+  chartTM7 = new Chart(document.getElementById('chartTortaMarca7'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Marca Propia', 'Marca de Terceros'],
+      datasets: [{ data: [propia, terceros], backgroundColor: ['rgba(124,111,247,0.85)','rgba(240,96,96,0.75)'], borderColor: '#16181c', borderWidth: 3 }]
+    },
+    plugins: [ChartDataLabels],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: ctx => { const total = propia+terceros; const pct = total ? (ctx.parsed/total*100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`; } } },
+        datalabels: {
+          color: '#fff', font: { size: 12, weight: '600' },
+          formatter: (v, ctx) => {
+            const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+            return total ? Math.round(v/total*100) + '%' : '';
+          }
+        }
+      },
+      cutout: '55%'
+    }
+  });
+}
+
+let chartTNR7 = null;
+function renderTortaNR7(nuevos, repetidos) {
+  if (chartTNR7) chartTNR7.destroy();
+  chartTNR7 = new Chart(document.getElementById('chartTortaNR7'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Modelos Nuevos MP', 'Modelos Repetidos MP'],
+      datasets: [{ data: [nuevos, repetidos], backgroundColor: ['rgba(45,212,176,0.85)','rgba(245,166,35,0.8)'], borderColor: '#16181c', borderWidth: 3 }]
+    },
+    plugins: [ChartDataLabels],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: ctx => { const total = nuevos+repetidos; const pct = total ? (ctx.parsed/total*100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`; } } },
+        datalabels: {
+          color: '#fff', font: { size: 12, weight: '600' },
+          formatter: (v, ctx) => {
+            const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+            return total ? Math.round(v/total*100) + '%' : '';
+          }
+        }
+      },
+      cutout: '55%'
+    }
+  });
+}
+
+let chartCertMP7 = null;
+function renderChartCertMP7(d) {
+  const CERTS_SIN = ['certificado 21', 'certificado 20', 'certificado 1'];
+  const esSinCert = r => {
+    const c1 = (r[C2.cert1]||'').toLowerCase().trim();
+    const c2 = (r[C2.cert2]||'').toLowerCase().trim();
+    return CERTS_SIN.includes(c1) || CERTS_SIN.includes(c2);
+  };
+
+  const modelosRepMP = {};
+  d.filter(r =>
+    (r[C2.tipoMarca]||'').toLowerCase().includes('propia') &&
+    (r[C2.nuevoRepetido]||'').toLowerCase().includes('repetido')
+  ).forEach(r => {
+    if (r[C2.modelo]) modelosRepMP[r[C2.modelo]] = esSinCert(r);
+  });
+
+  const valores = Object.values(modelosRepMP);
+  const sinCert = valores.filter(v => v === true).length;
+  const conCert = valores.filter(v => v === false).length;
+
+  const listaSinCert = Object.entries(modelosRepMP).filter(([m,v]) => v === true).map(([m]) => m).sort();
+  const listaConCert = Object.entries(modelosRepMP).filter(([m,v]) => v === false).map(([m]) => m).sort();
+
+  const tbodySin = document.getElementById('tbodySinCert7');
+  const tbodyCon = document.getElementById('tbodyConCert7');
+  if (tbodySin) {
+    tbodySin.innerHTML = listaSinCert.length
+      ? listaSinCert.map(m => `<tr><td class="primary">${m}</td></tr>`).join('')
+      : '<tr><td style="color:var(--text3);">Sin resultados</td></tr>';
+    document.getElementById('conteoSinCert7').textContent = `${listaSinCert.length} modelo${listaSinCert.length!==1?'s':''}`;
+  }
+  if (tbodyCon) {
+    tbodyCon.innerHTML = listaConCert.length
+      ? listaConCert.map(m => `<tr><td class="primary">${m}</td></tr>`).join('')
+      : '<tr><td style="color:var(--text3);">Sin resultados</td></tr>';
+    document.getElementById('conteoConCert7').textContent = `${listaConCert.length} modelo${listaConCert.length!==1?'s':''}`;
+  }
+
+  if (chartCertMP7) chartCertMP7.destroy();
+  chartCertMP7 = new Chart(document.getElementById('chartCertMP7'), {
     type: 'bar',
     data: {
       labels: ['Sin Certificado', 'Con Otro Certificado'],
@@ -1567,6 +1976,8 @@ function actualizarTodo() {
     datos2 = r.data;
     poblarMeses(datos2, C2.eta, 'filtroMes2');
     aplicarFiltros2();
+    poblarSemanas(datos2, C2.fechaMigracion, 'filtroSemana7');
+    aplicarFiltros7();
     check();
   }, error() { check(); } });
 
