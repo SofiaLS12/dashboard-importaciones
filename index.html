@@ -999,18 +999,19 @@ function renderChartLineas2b(d) {
     plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 28 } },
       plugins: {
         legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } },
         datalabels: {
-          anchor: 'end', align: 'top',
+          anchor: 'end', align: 'top', offset: 4, clamp: true,
           color: '#f0f0f0', font: { size: 11, weight: '500' },
           formatter: v => v > 0 ? '$ ' + (v/1000).toFixed(0) + 'k' : ''
         }
       },
       scales: {
         x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, suggestedMax: Math.max(esperado, capturado, noCapturado) * 1.15 }
       }
     }
   });
@@ -1323,6 +1324,7 @@ function renderChartLineas7b(d) {
     plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 28 } },
       plugins: {
         legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => {
@@ -1330,7 +1332,7 @@ function renderChartLineas7b(d) {
           return ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})} (${pct}%)`;
         } } },
         datalabels: {
-          anchor: 'end', align: 'top',
+          anchor: 'end', align: 'top', offset: 4, clamp: true,
           color: '#f0f0f0', font: { size: 11, weight: '500' },
           formatter: v => {
             if (v <= 0) return '';
@@ -1341,7 +1343,7 @@ function renderChartLineas7b(d) {
       },
       scales: {
         x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, suggestedMax: Math.max(esperado, capturado, noCapturado) * 1.15 }
       }
     }
   });
