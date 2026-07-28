@@ -514,7 +514,7 @@
     </div>
     <!-- Gráfico certificados -->
     <div class="card" style="margin-bottom:24px;">
-      <div class="card-title">Modelos Repetidos MP — Con vs Sin Certificado (1, 20, 21)</div>
+      <div class="card-title">Modelos Repetidos MP — Con vs Sin Certificado (fuente: Accionables)</div>
       <div style="position:relative; height:280px;">
         <canvas id="chartCertMP7"></canvas>
       </div>
@@ -527,7 +527,7 @@
           <p style="font-size:13px; font-weight:500; color:var(--red); margin-bottom:10px;">Modelos Repetidos MP — Sin certificado</p>
           <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
             <table>
-              <thead><tr><th>Modelo</th></tr></thead>
+              <thead><tr><th>Modelo</th><th>Dispersión de precio</th></tr></thead>
               <tbody id="tbodySinCert7"></tbody>
             </table>
           </div>
@@ -537,7 +537,7 @@
           <p style="font-size:13px; font-weight:500; color:var(--teal); margin-bottom:10px;">Modelos Repetidos MP — Con certificado</p>
           <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
             <table>
-              <thead><tr><th>Modelo</th></tr></thead>
+              <thead><tr><th>Modelo</th><th>Dispersión de precio</th></tr></thead>
               <tbody id="tbodyConCert7"></tbody>
             </table>
           </div>
@@ -556,6 +556,7 @@ const CSV3 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7B
 const CSV4 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=806576624&single=true&output=csv';
 const CSV5 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=0&single=true&output=csv';
 const CSV6 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=757044906&single=true&output=csv';
+const CSV7 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=262098150&single=true&output=csv'; // Accionables
 
 const ANALISTAS = ['Luciana', 'Florencia', 'Aymara'];
 const COLORES = {
@@ -580,8 +581,9 @@ const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invo
 const C4 = { embarque: 'Embarque 	', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias' };
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o Repetido', fobSIMI: 'FOB SIMI TOTAL C/Tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2', fechaMigracion: 'Fecha Migración' };
+const C7 = { so: 'SO', marca: 'Marca', modelo: 'Modelo', cert1: 'Certificado 1', cert2: 'Certificado 2', qty: 'Qty Importaciones', eta: 'ETA', pctAplicado: '% Aplicado', tope: 'Tope teórico', dispSin: 'Dispersión de precio sin certificado', dispCon: 'Dispersión de precio con certificado', fechaMigracion: 'Fecha Migración' };
 
-let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [];
+let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [], datos7 = [];
 let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTD4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null, chartSOA6 = null;
 
 function parseFecha(str) {
@@ -648,6 +650,26 @@ function poblarSemanas(datos, colFecha, selectId) {
     if (f && !isNaN(f)) semanas.add(claveSemana(f));
   });
   const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todas las semanas</option>';
+  [...semanas].sort().reverse().forEach(s => {
+    const [y, w] = s.split('-W');
+    sel.innerHTML += `<option value="${s}" ${cur===s?'selected':''}>Semana ${parseInt(w,10)} - ${y}</option>`;
+  });
+}
+
+function poblarSemanas7Combinado() {
+  const semanas = new Set();
+  datos2.forEach(r => {
+    const f = parseFecha(r[C2.fechaMigracion]);
+    if (f && !isNaN(f)) semanas.add(claveSemana(f));
+  });
+  datos7.forEach(r => {
+    const f = parseFecha(r[C7.fechaMigracion]);
+    if (f && !isNaN(f)) semanas.add(claveSemana(f));
+  });
+  const sel = document.getElementById('filtroSemana7');
   if (!sel) return;
   const cur = sel.value;
   sel.innerHTML = '<option value="">Todas las semanas</option>';
@@ -1280,7 +1302,9 @@ function aplicarFiltros7() {
   renderChartLineas7b(d);
   renderTortaMarca7(propia, terceros);
   renderTortaNR7(nuevos, repetidos);
-  renderChartCertMP7(d);
+
+  const d7 = filtrarSemana(datos7, C7.fechaMigracion, 'filtroSemana7');
+  renderChartCertMP7(d7);
 }
 
 let chartL7b = null;
@@ -1406,41 +1430,34 @@ function renderTortaNR7(nuevos, repetidos) {
 }
 
 let chartCertMP7 = null;
-function renderChartCertMP7(d) {
-  const CERTS_SIN = ['certificado 21', 'certificado 20', 'certificado 1'];
-  const esSinCert = r => {
-    const c1 = (r[C2.cert1]||'').toLowerCase().trim();
-    const c2 = (r[C2.cert2]||'').toLowerCase().trim();
-    return CERTS_SIN.includes(c1) || CERTS_SIN.includes(c2);
-  };
+function tieneValor(v) { return v !== undefined && v !== null && String(v).trim() !== ''; }
 
-  const modelosRepMP = {};
-  d.filter(r =>
-    (r[C2.tipoMarca]||'').toLowerCase().includes('propia') &&
-    (r[C2.nuevoRepetido]||'').toLowerCase().includes('repetido')
-  ).forEach(r => {
-    if (r[C2.modelo]) modelosRepMP[r[C2.modelo]] = esSinCert(r);
+function renderChartCertMP7(d) {
+  const mapSin = {}, mapCon = {};
+  d.forEach(r => {
+    const modelo = r[C7.modelo];
+    if (!modelo) return;
+    if (tieneValor(r[C7.dispSin]) && !(modelo in mapSin)) mapSin[modelo] = r[C7.dispSin];
+    else if (tieneValor(r[C7.dispCon]) && !(modelo in mapCon)) mapCon[modelo] = r[C7.dispCon];
   });
 
-  const valores = Object.values(modelosRepMP);
-  const sinCert = valores.filter(v => v === true).length;
-  const conCert = valores.filter(v => v === false).length;
-
-  const listaSinCert = Object.entries(modelosRepMP).filter(([m,v]) => v === true).map(([m]) => m).sort();
-  const listaConCert = Object.entries(modelosRepMP).filter(([m,v]) => v === false).map(([m]) => m).sort();
+  const listaSinCert = Object.entries(mapSin).sort((a,b) => a[0].localeCompare(b[0]));
+  const listaConCert = Object.entries(mapCon).sort((a,b) => a[0].localeCompare(b[0]));
+  const sinCert = listaSinCert.length;
+  const conCert = listaConCert.length;
 
   const tbodySin = document.getElementById('tbodySinCert7');
   const tbodyCon = document.getElementById('tbodyConCert7');
   if (tbodySin) {
     tbodySin.innerHTML = listaSinCert.length
-      ? listaSinCert.map(m => `<tr><td class="primary">${m}</td></tr>`).join('')
-      : '<tr><td style="color:var(--text3);">Sin resultados</td></tr>';
+      ? listaSinCert.map(([m,v]) => `<tr><td class="primary">${m}</td><td>${v}</td></tr>`).join('')
+      : '<tr><td colspan="2" style="color:var(--text3);">Sin resultados</td></tr>';
     document.getElementById('conteoSinCert7').textContent = `${listaSinCert.length} modelo${listaSinCert.length!==1?'s':''}`;
   }
   if (tbodyCon) {
     tbodyCon.innerHTML = listaConCert.length
-      ? listaConCert.map(m => `<tr><td class="primary">${m}</td></tr>`).join('')
-      : '<tr><td style="color:var(--text3);">Sin resultados</td></tr>';
+      ? listaConCert.map(([m,v]) => `<tr><td class="primary">${m}</td><td>${v}</td></tr>`).join('')
+      : '<tr><td colspan="2" style="color:var(--text3);">Sin resultados</td></tr>';
     document.getElementById('conteoConCert7').textContent = `${listaConCert.length} modelo${listaConCert.length!==1?'s':''}`;
   }
 
@@ -1448,7 +1465,7 @@ function renderChartCertMP7(d) {
   chartCertMP7 = new Chart(document.getElementById('chartCertMP7'), {
     type: 'bar',
     data: {
-      labels: ['Sin Certificado', 'Con Otro Certificado'],
+      labels: ['Sin Certificado', 'Con Certificado'],
       datasets: [{
         data: [sinCert, conCert],
         backgroundColor: ['rgba(240,96,96,0.85)', 'rgba(45,212,176,0.85)'],
@@ -2023,7 +2040,7 @@ function actualizarTodo() {
   const btn = document.getElementById('btnActualizar');
   btn.classList.add('loading');
   let done = 0;
-  function check() { if (++done === 6) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
+  function check() { if (++done === 7) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
 
   Papa.parse(CSV1, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datos1 = r.data;
@@ -2038,7 +2055,7 @@ function actualizarTodo() {
     datos2 = r.data;
     poblarMeses(datos2, C2.eta, 'filtroMes2');
     aplicarFiltros2();
-    poblarSemanas(datos2, C2.fechaMigracion, 'filtroSemana7');
+    poblarSemanas7Combinado();
     aplicarFiltros7();
     check();
   }, error() { check(); } });
@@ -2069,6 +2086,13 @@ function actualizarTodo() {
     datos6 = r.data;
     poblarFiltros6();
     aplicarFiltros6();
+    check();
+  }, error() { check(); } });
+
+  Papa.parse(CSV7, { download: true, header: true, skipEmptyLines: true, complete(r) {
+    datos7 = r.data;
+    poblarSemanas7Combinado();
+    aplicarFiltros7();
     check();
   }, error() { check(); } });
 }
