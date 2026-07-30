@@ -528,7 +528,7 @@
           <p style="font-size:13px; font-weight:500; color:var(--red); margin-bottom:10px;">Modelos Repetidos MP — Sin certificado</p>
           <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
             <table>
-              <thead><tr><th>Modelo</th><th>Dispersión de precio</th></tr></thead>
+              <thead><tr><th>Modelo</th><th>Marca</th><th>Dispersión de precio</th></tr></thead>
               <tbody id="tbodySinCert7"></tbody>
             </table>
           </div>
@@ -538,7 +538,7 @@
           <p style="font-size:13px; font-weight:500; color:var(--teal); margin-bottom:10px;">Modelos Repetidos MP — Con certificado</p>
           <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
             <table>
-              <thead><tr><th>Modelo</th><th>Dispersión de precio</th></tr></thead>
+              <thead><tr><th>Modelo</th><th>Marca</th><th>Dispersión de precio</th></tr></thead>
               <tbody id="tbodyConCert7"></tbody>
             </table>
           </div>
@@ -1466,8 +1466,8 @@ function renderChartCertMP7(d) {
   d.forEach(r => {
     const modelo = r[C7.modelo];
     if (!modelo) return;
-    if (tieneValor(r[C7.dispSin]) && !(modelo in mapSin)) mapSin[modelo] = r[C7.dispSin];
-    else if (tieneValor(r[C7.dispCon]) && !(modelo in mapCon)) mapCon[modelo] = r[C7.dispCon];
+    if (tieneValor(r[C7.dispSin]) && !(modelo in mapSin)) mapSin[modelo] = { disp: r[C7.dispSin], marca: r[C7.marca] || '—' };
+    else if (tieneValor(r[C7.dispCon]) && !(modelo in mapCon)) mapCon[modelo] = { disp: r[C7.dispCon], marca: r[C7.marca] || '—' };
   });
 
   const listaSinCert = Object.entries(mapSin).sort((a,b) => a[0].localeCompare(b[0]));
@@ -1479,14 +1479,14 @@ function renderChartCertMP7(d) {
   const tbodyCon = document.getElementById('tbodyConCert7');
   if (tbodySin) {
     tbodySin.innerHTML = listaSinCert.length
-      ? listaSinCert.map(([m,v]) => `<tr><td class="primary">${m}</td><td>${v}</td></tr>`).join('')
-      : '<tr><td colspan="2" style="color:var(--text3);">Sin resultados</td></tr>';
+      ? listaSinCert.map(([m,info]) => `<tr><td class="primary">${m}</td><td>${info.marca}</td><td>${info.disp}</td></tr>`).join('')
+      : '<tr><td colspan="3" style="color:var(--text3);">Sin resultados</td></tr>';
     document.getElementById('conteoSinCert7').textContent = `${listaSinCert.length} modelo${listaSinCert.length!==1?'s':''}`;
   }
   if (tbodyCon) {
     tbodyCon.innerHTML = listaConCert.length
-      ? listaConCert.map(([m,v]) => `<tr><td class="primary">${m}</td><td>${v}</td></tr>`).join('')
-      : '<tr><td colspan="2" style="color:var(--text3);">Sin resultados</td></tr>';
+      ? listaConCert.map(([m,info]) => `<tr><td class="primary">${m}</td><td>${info.marca}</td><td>${info.disp}</td></tr>`).join('')
+      : '<tr><td colspan="3" style="color:var(--text3);">Sin resultados</td></tr>';
     document.getElementById('conteoConCert7').textContent = `${listaConCert.length} modelo${listaConCert.length!==1?'s':''}`;
   }
 
