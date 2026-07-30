@@ -154,6 +154,7 @@
   <button class="tab-btn" onclick="cambiarTab('tab3', this)">Gestión Proveedores</button>
   <button class="tab-btn" onclick="cambiarTab('tab6', this)">Asignaciones</button>
   <button class="tab-btn" onclick="cambiarTab('tab7', this)">Weekly Estrategia</button>
+  <button class="tab-btn" onclick="cambiarTab('tab8', this)">Monthly Estrategia</button>
 </nav>
 
 <main>
@@ -543,6 +544,34 @@
           </div>
           <p class="conteo" id="conteoConCert7"></p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 8: Monthly Estrategia -->
+  <div id="tab8" class="tab-panel">
+    <!-- Fila 1: Precio Invoice + FOB asignado -->
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:12px;">
+      <div class="kpi teal"><div class="kpi-label">Precio Invoice Total (USD)</div><div class="kpi-value" id="k8-precio">—</div></div>
+      <div class="kpi blue"><div class="kpi-label">FOB Asignado Total (USD)</div><div class="kpi-value" id="k8-fobasignado">—</div></div>
+    </div>
+    <!-- Fila 2: Capturado, Extra Mile, No Capturado -->
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:12px;">
+      <div class="kpi amber"><div class="kpi-label">Valor Capturado (USD)</div><div class="kpi-value" id="k8-capturado">—</div></div>
+      <div class="kpi green"><div class="kpi-label">Extra Mile (USD)</div><div class="kpi-value" id="k8-extramile">—</div></div>
+      <div class="kpi red"><div class="kpi-label">Valor NO Capturado (USD)</div><div class="kpi-value" id="k8-nocapturado">—</div></div>
+    </div>
+    <div class="filter-row">
+      <label>Filtrar por mes:</label>
+      <select id="filtroMes8" onchange="aplicarFiltros8()">
+        <option value="">Todos los meses</option>
+      </select>
+    </div>
+    <!-- Gráfico líneas -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Valor capturado vs Precio Invoice Total por mes (USD)</div>
+      <div style="position:relative; height:300px;">
+        <canvas id="chartLineas8"></canvas>
       </div>
     </div>
   </div>
@@ -1492,6 +1521,79 @@ function renderChartCertMP7(d) {
   });
 }
 
+// ─── TAB 8: MONTHLY ESTRATEGIA (mismas tarjetas y gráfico que TAB 7, pero filtrado por mes según Fecha Migración) ───
+let chartL8 = null;
+function renderChartLineas8() {
+  const mesMap = {};
+  datos2.forEach(r => {
+    const f = parseFecha(r[C2.fechaMigracion]);
+    if (!f || isNaN(f)) return;
+    const key = `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`;
+    if (!mesMap[key]) mesMap[key] = { precio: 0, capturado: 0 };
+    mesMap[key].precio += parsNum(r[C2.precio]);
+    mesMap[key].capturado += parsNum(r[C2.valorAbs]);
+  });
+  const meses = Object.keys(mesMap).sort();
+  const labels = meses.map(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(y, mo-1, 1).toLocaleDateString('es-AR', { month: 'short', year: '2-digit' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  });
+  if (chartL8) chartL8.destroy();
+  chartL8 = new Chart(document.getElementById('chartLineas8'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Precio Invoice Total (USD)',
+          data: meses.map(m => mesMap[m].precio),
+          borderColor: '#7c6ff7', backgroundColor: 'rgba(124,111,247,0.1)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#7c6ff7', tension: 0.3, fill: true
+        },
+        {
+          label: 'Valor Capturado (USD)',
+          data: meses.map(m => mesMap[m].capturado),
+          borderColor: '#2dd4b0', backgroundColor: 'rgba(45,212,176,0.1)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#2dd4b0', tension: 0.3, fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function aplicarFiltros8() {
+  const d = filtrarMes(datos2, C2.fechaMigracion, 'filtroMes8');
+
+  const precioTotal = d.reduce((s,r) => s + parsNum(r[C2.precio]), 0);
+  document.getElementById('k8-precio').textContent = '$ ' + precioTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const fobAsignadoTotal = d.reduce((s,r) => s + parsNum(r[C2.fobAsignado]), 0);
+  document.getElementById('k8-fobasignado').textContent = '$ ' + fobAsignadoTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const capturado = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
+  document.getElementById('k8-capturado').textContent = '$ ' + capturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const extraMile = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v > 0 ? v : 0); }, 0);
+  document.getElementById('k8-extramile').textContent = '$ ' + extraMile.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const noCapturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
+  document.getElementById('k8-nocapturado').textContent = '$ ' + noCapturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  renderChartLineas8();
+}
+
 // ─── TAB 3 ───
 function aplicarFiltros3() {
   const d = filtrarMes(datos3, C3.fecha, 'filtroMes3');
@@ -2057,6 +2159,8 @@ function actualizarTodo() {
     aplicarFiltros2();
     poblarSemanas7Combinado();
     aplicarFiltros7();
+    poblarMeses(datos2, C2.fechaMigracion, 'filtroMes8');
+    aplicarFiltros8();
     check();
   }, error() { check(); } });
 
