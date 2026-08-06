@@ -520,6 +520,13 @@
         <canvas id="chartCertMP7"></canvas>
       </div>
     </div>
+    <!-- Resultados -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Resultados (fuente: Accionables)</div>
+      <div style="position:relative; height:280px;">
+        <canvas id="chartResultados7"></canvas>
+      </div>
+    </div>
     <!-- Accionables -->
     <div class="card">
       <div class="card-title">Accionables</div>
@@ -610,7 +617,7 @@ const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invo
 const C4 = { embarque: 'Embarque 	', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias' };
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o Repetido', fobSIMI: 'FOB SIMI TOTAL C/Tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2', fechaMigracion: 'Fecha Migración' };
-const C7 = { so: 'SO', marca: 'Marca', modelo: 'Modelo', cert1: 'Certificado 1', cert2: 'Certificado 2', qty: 'Qty Importaciones', eta: 'ETA', estrategia: 'Estrategia', pctAplicado: '% Aplicado', tope: 'Tope teórico', dispSin: 'Dispersión de precio sin certificado', dispCon: 'Dispersión de precio con certificado', fechaMigracion: 'Fecha Migración' };
+const C7 = { so: 'SO', marca: 'Marca', modelo: 'Modelo', cert1: 'Certificado 1', cert2: 'Certificado 2', qty: 'Qty Importaciones', eta: 'ETA', estrategia: 'Estrategia', pctAplicado: '% Aplicado', tope: 'Tope teórico', dispSin: 'Dispersión de precio sin certificado', dispCon: 'Dispersión de precio con certificado', fechaMigracion: 'Fecha Migración', valorCapturado: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', valorNoCapturado: 'Valor no capturado' };
 
 let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [], datos7 = [];
 let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTD4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null, chartSOA6 = null;
@@ -1333,7 +1340,8 @@ function aplicarFiltros7() {
   renderTortaNR7(nuevos, repetidos);
 
   const d7 = filtrarSemana(datos7, C7.fechaMigracion, 'filtroSemana7');
-  renderChartCertMP7(d7);
+  renderChartCertMP7(d7, totalModelos);
+  renderResultados7(d7);
 }
 
 let chartL7b = null;
@@ -1461,7 +1469,7 @@ function renderTortaNR7(nuevos, repetidos) {
 let chartCertMP7 = null;
 function tieneValor(v) { return v !== undefined && v !== null && String(v).trim() !== ''; }
 
-function renderChartCertMP7(d) {
+function renderChartCertMP7(d, totalModelos) {
   const mapSin = {}, mapCon = {};
   d.forEach(r => {
     const modelo = r[C7.modelo];
@@ -1474,6 +1482,7 @@ function renderChartCertMP7(d) {
   const listaConCert = Object.entries(mapCon).sort((a,b) => a[0].localeCompare(b[0]));
   const sinCert = listaSinCert.length;
   const conCert = listaConCert.length;
+  const totalRef = totalModelos > 0 ? totalModelos : (sinCert + conCert);
 
   const tbodySin = document.getElementById('tbodySinCert7');
   const tbodyCon = document.getElementById('tbodyConCert7');
@@ -1504,19 +1513,64 @@ function renderChartCertMP7(d) {
     plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 28 } },
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.y} modelos` } },
+        tooltip: { callbacks: { label: ctx => {
+          const pct = totalRef > 0 ? (ctx.parsed.y/totalRef*100).toFixed(1) : 0;
+          return ` ${ctx.label}: ${ctx.parsed.y} modelos (${pct}% del Total Modelos)`;
+        } } },
         datalabels: {
-          anchor: 'end', align: 'top',
+          anchor: 'end', align: 'top', offset: 4, clamp: true,
           color: '#f0f0f0', font: { size: 13, weight: '600' },
-          formatter: v => v > 0 ? v : ''
+          formatter: v => {
+            if (v <= 0) return '';
+            const pct = totalRef > 0 ? (v/totalRef*100).toFixed(1) : 0;
+            return v + ' (' + pct + '%)';
+          }
         }
       },
       scales: {
         x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, suggestedMax: Math.max(sinCert, conCert) * 1.2 }
       }
+    }
+  });
+}
+
+let chartResultados7 = null;
+function renderResultados7(d) {
+  const capturado = d.reduce((s,r) => s + parsNum(r[C7.valorCapturado]), 0);
+  const noCapturado = d.reduce((s,r) => s + Math.abs(parsNum(r[C7.valorNoCapturado])), 0);
+  const total = capturado + noCapturado;
+
+  if (chartResultados7) chartResultados7.destroy();
+  chartResultados7 = new Chart(document.getElementById('chartResultados7'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Valor Capturado', 'Valor No Capturado'],
+      datasets: [{ data: [capturado, noCapturado], backgroundColor: ['rgba(45,212,176,0.85)','rgba(240,96,96,0.8)'], borderColor: '#16181c', borderWidth: 3 }]
+    },
+    plugins: [ChartDataLabels],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: ctx => {
+          const pct = total > 0 ? (ctx.parsed/total*100).toFixed(1) : 0;
+          return ` ${ctx.label}: $ ${ctx.parsed.toLocaleString('es-AR', {minimumFractionDigits:0})} (${pct}%)`;
+        } } },
+        datalabels: {
+          color: '#fff', font: { size: 12, weight: '600' },
+          formatter: (v, ctx) => {
+            const t = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+            if (!t || v <= 0) return '';
+            const pct = (v/t*100).toFixed(1);
+            return '$ ' + (v/1000).toFixed(0) + 'k (' + pct + '%)';
+          }
+        }
+      },
+      cutout: '55%'
     }
   });
 }
