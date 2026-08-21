@@ -437,9 +437,9 @@
     <!-- Gráfico FCLs por Analista desde Copia Importaciones2 -->
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
       <div class="card">
-        <div class="card-title">FCLs únicos por Analista</div>
+        <div class="card-title">Embarques por Analista (fuente: Carga Impo2)</div>
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-          <label style="font-size:13px; color:var(--text2);">Filtrar por mes (Fecha arribo aduana):</label>
+          <label style="font-size:13px; color:var(--text2);">Filtrar por mes (Pasar a impo2):</label>
           <select id="filtroMes6b" onchange="renderChartFCLsAnalista()" style="font-family:var(--font); font-size:13px; background:var(--surface2); border:0.5px solid var(--border2); border-radius:8px; color:var(--text); padding:8px 14px; outline:none; cursor:pointer;">
             <option value="">Todos los meses</option>
           </select>
@@ -614,7 +614,7 @@ function getColorAnalista(nombre) {
 const C6 = { fcl: 'FCL', eta: 'ETA', shipper: 'Shipper', fob: 'Moto FOB total', banco: 'Banco Asignado', analista: 'Analista responsable' };
 const C5 = { fcl: 'N° FCL', arribo: 'Fecha de arribo a Aduana', so: 'ID Stock Origen', invoice: 'N° Invoice', fechaInvoice: 'Fecha Invoice', responsable: 'Responsable Commercial Invoice', difDias: 'Diferencia de dias' };
 const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invoice: 'N° Invoice', arribo: 'Fecha de arribo a Aduana', deposito: 'Deposito ZFLP', fobTotal: 'FOB SIMI TOTAL', banco: 'Banco Asignado', shipper: 'Shipper', so: 'ID Stock Origen' };
-const C4 = { embarque: 'Embarque 	', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias' };
+const C4 = { embarque: 'Embarque 	', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias', sos: 'Cantidad de SOs por embarque' };
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o Repetido', fobSIMI: 'FOB SIMI TOTAL C/Tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2', fechaMigracion: 'Fecha Migración' };
 const C7 = { so: 'SO', marca: 'Marca', modelo: 'Modelo', cert1: 'Certificado 1', cert2: 'Certificado 2', qty: 'Qty Importaciones', eta: 'ETA', estrategia: 'Estrategia', pctAplicado: '% Aplicado', tope: 'Tope teórico', dispSin: 'Dispersión de precio sin certificado', dispCon: 'Dispersión de precio con certificado', fechaMigracion: 'Fecha Migración', valorCapturado: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', valorNoCapturado: 'Valor no capturado' };
@@ -2081,8 +2081,8 @@ function aplicarFiltros6() {
 // ─── FCLs y SOs por Analista (tab6, desde datos1) ───
 function poblarMes6b() {
   const meses = new Set();
-  datos1.forEach(r => {
-    const f = parseFecha(r[C1.arribo]);
+  datos4.forEach(r => {
+    const f = parseFecha4(r[C4.pasarImpo2]);
     if (f && !isNaN(f)) meses.add(`${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`);
   });
   const sel = document.getElementById('filtroMes6b');
@@ -2098,31 +2098,27 @@ function poblarMes6b() {
 
 function renderChartFCLsAnalista() {
   const mes = (document.getElementById('filtroMes6b')||{value:''}).value;
-  let d = datos1;
-  if (mes) {
+  let d = datos4.filter(r => {
+    const f = parseFecha4(r[C4.pasarImpo2]);
+    if (!f || isNaN(f)) return false;
+    if (!mes) return true;
     const [y, mo] = mes.split('-').map(Number);
-    d = datos1.filter(r => {
-      const f = parseFecha(r[C1.arribo]);
-      return f && f.getFullYear() === y && f.getMonth()+1 === mo;
-    });
-  }
+    return f.getFullYear() === y && f.getMonth()+1 === mo;
+  });
+  d = d.filter(r => !(r[C4.analista]||'').toLowerCase().includes('sofi'));
 
-  const keyAnalista = datos1.length > 0
-    ? Object.keys(datos1[0]).find(k => k.trim() === 'Analista Responsable') || 'Analista Responsable'
-    : 'Analista Responsable';
+  const conEmbarque = d.filter(r => (r[C4.embarque]||'').trim() !== '');
 
-  const analistaFCL = {};
-  d.forEach(r => {
-    const analista = (r[keyAnalista]||'').trim();
-    if (!analista || analista.toLowerCase().includes('azul')) return;
-    const fcl = (r[C1.fcl]||'').trim();
-    if (!fcl) return;
-    if (!analistaFCL[analista]) analistaFCL[analista] = new Set();
-    analistaFCL[analista].add(fcl);
+  // Barras celestes: cantidad de embarques por analista
+  const analistaEmb = {};
+  conEmbarque.forEach(r => {
+    const analista = (r[C4.analista]||'').trim();
+    if (!analista) return;
+    analistaEmb[analista] = (analistaEmb[analista]||0) + 1;
   });
 
-  const analistas = Object.keys(analistaFCL).sort((a,b) => analistaFCL[b].size - analistaFCL[a].size);
-  const valores = analistas.map(a => analistaFCL[a].size);
+  const analistas = Object.keys(analistaEmb).sort((a,b) => analistaEmb[b] - analistaEmb[a]);
+  const valores = analistas.map(a => analistaEmb[a]);
   const celestes = analistas.map((_,i) => `rgba(56,189,248,${0.9 - i*0.07 < 0.35 ? 0.35 : 0.9 - i*0.07})`);
 
   if (chartFA6) chartFA6.destroy();
@@ -2131,7 +2127,7 @@ function renderChartFCLsAnalista() {
     data: {
       labels: analistas,
       datasets: [{
-        label: 'FCLs únicos',
+        label: 'Embarques',
         data: valores,
         backgroundColor: celestes,
         borderRadius: 6
@@ -2141,7 +2137,7 @@ function renderChartFCLsAnalista() {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ` FCLs: ${ctx.parsed.y}` } }
+        tooltip: { callbacks: { label: ctx => ` Embarques: ${ctx.parsed.y}` } }
       },
       scales: {
         x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
@@ -2150,19 +2146,18 @@ function renderChartFCLsAnalista() {
     }
   });
 
-  // Torta amarilla: SOs por analista
+  // Torta amarilla: suma columna G (Cantidad de SOs por embarque) por analista
   const analistaSO = {};
-  d.forEach(r => {
-    const analista = (r[keyAnalista]||'').trim();
-    if (!analista || analista.toLowerCase().includes('azul')) return;
-    const so = (r[C1.so]||'').trim();
-    if (!so) return;
-    if (!analistaSO[analista]) analistaSO[analista] = new Set();
-    analistaSO[analista].add(so);
+  conEmbarque.forEach(r => {
+    const analista = (r[C4.analista]||'').trim();
+    if (!analista) return;
+    const val = parsNum(r[C4.sos]);
+    if (!val) return;
+    analistaSO[analista] = (analistaSO[analista]||0) + val;
   });
 
   const analistasSO = Object.keys(analistaSO).sort();
-  const valoresSO = analistasSO.map(a => analistaSO[a].size);
+  const valoresSO = analistasSO.map(a => analistaSO[a]);
   const amarillos = analistasSO.map((_,i) => `rgba(240,210,120,${0.95 - i*0.1 < 0.3 ? 0.3 : 0.95 - i*0.1})`);
 
   if (chartSOA6) chartSOA6.destroy();
@@ -2202,8 +2197,6 @@ function actualizarTodo() {
     datos1 = r.data;
     poblarMeses(datos1, C1.arribo, 'filtroMes1');
     aplicarFiltros1();
-    poblarMes6b();
-    renderChartFCLsAnalista();
     check();
   }, error() { check(); } });
 
@@ -2229,6 +2222,8 @@ function actualizarTodo() {
     datos4 = r.data;
     poblarMeses4();
     aplicarFiltros4();
+    poblarMes6b();
+    renderChartFCLsAnalista();
     check();
   }, error() { check(); } });
 
