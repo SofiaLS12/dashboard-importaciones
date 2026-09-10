@@ -124,6 +124,10 @@
   .loading-row td { text-align: center; padding: 32px; color: var(--text3); }
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); margin-right: 6px; animation: pulse 2s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  #kpi-facturas, #kpi-sos, #kpi-analistas,
+  #k7-precio, #k7-fobasignado, #k7-totalmodelos, #k7-propia, #k7-terceros, #k7-nuevos, #k7-repetidos {
+    color: #000000 !important;
+  }
 </style>
 </head>
 <body>
@@ -184,6 +188,12 @@
         <div style="position:relative; height:240px;">
           <canvas id="chartSOs"></canvas>
         </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Embarques por Antigüedad de Factura (fuente: Fecha fc julio)</div>
+      <div style="position:relative; height:260px;">
+        <canvas id="chartDias15"></canvas>
       </div>
     </div>
     <div class="card">
@@ -590,7 +600,7 @@ const CSV1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7B
 const CSV2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=1418243662&single=true&output=csv';
 const CSV3 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=574545948&single=true&output=csv';
 const CSV4 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=806576624&single=true&output=csv';
-const CSV5 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=0&single=true&output=csv';
+const CSV5 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=1641862340&single=true&output=csv'; // Fecha fc julio (reemplaza a Fecha fc)
 const CSV6 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=757044906&single=true&output=csv';
 const CSV7 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk7foMlo3TQCU-ry7I8/export?format=csv&gid=262098150'; // Accionables (spreadsheet "KPI prueba")
 
@@ -612,7 +622,7 @@ function getColorAnalista(nombre) {
   return analista && COLORES[analista] ? COLORES[analista].bg : 'rgba(232,115,74,0.85)';
 }
 const C6 = { fcl: 'FCL', eta: 'ETA', shipper: 'Shipper', fob: 'Moto FOB total', banco: 'Banco Asignado', analista: 'Analista responsable' };
-const C5 = { fcl: 'N° FCL', arribo: 'Fecha de arribo a Aduana', so: 'ID Stock Origen', invoice: 'N° Invoice', fechaInvoice: 'Fecha Invoice', responsable: 'Responsable Commercial Invoice', difDias: 'Diferencia de dias' };
+const C5 = { fcl: 'N° FCL', arribo: 'Fecha de arribo a Aduana', so: 'ID Stock Origen', invoice: 'N° Invoice', fechaInvoice: 'Fecha Creación de Factura', responsable: 'Responsable Commercial Invoice', difDias: 'Diferencia de dias' };
 const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invoice: 'N° Invoice', arribo: 'Fecha de arribo a Aduana', deposito: 'Deposito ZFLP', fobTotal: 'FOB SIMI TOTAL', banco: 'Banco Asignado', shipper: 'Shipper', so: 'ID Stock Origen' };
 const C4 = { embarque: 'Embarque ', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias', sos: 'Cantidad de SOs por embarque' };
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
@@ -709,7 +719,7 @@ function poblarSemanas7Combinado() {
   if (!sel) return;
   const cur = sel.value;
   sel.innerHTML = '<option value="">Todas las semanas</option>';
-  [...semanas].sort().reverse().forEach(s => {
+  [...semanas].filter(s => !s.endsWith('-W26')).sort().reverse().forEach(s => {
     const [y, w] = s.split('-W');
     sel.innerHTML += `<option value="${s}" ${cur===s?'selected':''}>Semana ${parseInt(w,10)} - ${y}</option>`;
   });
@@ -765,6 +775,63 @@ function aplicarFiltros1() {
   document.getElementById('kpi-facturas').textContent = new Set(d.map(r=>r[C1.invoice]).filter(Boolean)).size.toLocaleString();
   document.getElementById('kpi-sos').textContent = new Set(d.map(r=>r[C1.so]).filter(Boolean)).size.toLocaleString();
   renderChartFacturas(d); renderChartSOs(d); renderTabla1(d);
+  renderChartDias15();
+}
+
+let chartDias15 = null;
+function renderChartDias15() {
+  // Fuente: Fecha fc julio (datos5). Filtra por mes según Fecha de arribo a Aduana (col B)
+  const mes = document.getElementById('filtroMes1').value;
+  let d5 = datos5;
+  if (mes) {
+    const [y, mo] = mes.split('-').map(Number);
+    d5 = datos5.filter(r => {
+      const f = parseFecha(r[C5.arribo]);
+      return f && f.getFullYear() === y && f.getMonth()+1 === mo;
+    });
+  }
+
+  // Cantidad de embarques (FCL únicos) con más de 15 días vs 15 días o menos
+  const masDe15 = new Set(), hasta15 = new Set();
+  d5.forEach(r => {
+    const fcl = (r[C5.fcl]||'').trim();
+    if (!fcl) return;
+    const dias = parsNum(r[C5.difDias]);
+    if ((r[C5.difDias]||'').toString().trim() === '') return;
+    if (dias > 15) masDe15.add(fcl); else hasta15.add(fcl);
+  });
+
+  if (chartDias15) chartDias15.destroy();
+  chartDias15 = new Chart(document.getElementById('chartDias15'), {
+    type: 'bar',
+    data: {
+      labels: ['Más de 15 días', '15 días o menos'],
+      datasets: [{
+        label: 'Embarques',
+        data: [masDe15.size, hasta15.size],
+        backgroundColor: ['rgba(232,115,74,0.9)', 'rgba(47,158,143,0.9)'],
+        borderRadius: 6
+      }]
+    },
+    plugins: [ChartDataLabels],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 28 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` Embarques: ${ctx.parsed.y}` } },
+        datalabels: {
+          anchor: 'end', align: 'top', offset: 4, clamp: true,
+          color: '#2c3e50', font: { size: 13, weight: '600' },
+          formatter: v => v > 0 ? v : ''
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#8a7d63', font: { size: 13 } }, grid: { display: false } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 } }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true }
+      }
+    }
+  });
 }
 
 function renderChartFacturas(d) {
@@ -1256,6 +1323,7 @@ function renderChartLineas7() {
     const f = parseFecha(r[C2.fechaMigracion]);
     if (!f || isNaN(f)) return;
     const key = claveSemana(f);
+    if (key.endsWith('-W26')) return;
     if (!semMap[key]) semMap[key] = { precio: 0, capturado: 0 };
     semMap[key].precio += parsNum(r[C2.precio]);
     semMap[key].capturado += parsNum(r[C2.valorAbs]);
