@@ -12,15 +12,15 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0e0f11; --surface: #16181c; --surface2: #1e2026;
-    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
-    --text: #f0f0f0; --text2: #8a8f9a; --text3: #555a66;
-    --purple: #7c6ff7; --purple-soft: rgba(124,111,247,0.15);
-    --teal: #2dd4b0; --teal-soft: rgba(45,212,176,0.15);
-    --amber: #f5a623; --amber-soft: rgba(245,166,35,0.12);
-    --red: #f06060; --red-soft: rgba(240,96,96,0.12);
-    --blue: #378ADD; --blue-soft: rgba(55,138,221,0.12);
-    --green: #639922; --green-soft: rgba(99,153,34,0.12);
+    --bg: #f2e6d3; --surface: #faf3e6; --surface2: #ffffff;
+    --border: #ece0c8; --border2: #e3d2ae;
+    --text: #2c3e50; --text2: #6b6152; --text3: #8a7d63;
+    --purple: #2c3e50; --purple-soft: rgba(44,62,80,0.1);
+    --teal: #2f9e8f; --teal-soft: rgba(47,158,143,0.14);
+    --amber: #eab54e; --amber-soft: rgba(234,181,78,0.16);
+    --red: #e8734a; --red-soft: rgba(232,115,74,0.14);
+    --blue: #2c3e50; --blue-soft: rgba(44,62,80,0.1);
+    --green: #2f9e8f; --green-soft: rgba(47,158,143,0.14);
     --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
   }
   body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -46,7 +46,7 @@
     background: var(--surface2); color: var(--text); cursor: pointer;
     display: flex; align-items: center; gap: 6px; transition: background 0.15s;
   }
-  .btn:hover { background: rgba(255,255,255,0.06); }
+  .btn:hover { background: rgba(44,62,80,0.06); }
   .btn.loading { opacity: 0.5; pointer-events: none; }
   .btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
 
@@ -115,50 +115,15 @@
   th { text-align: left; padding: 8px 10px; color: var(--text3); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 0.5px solid var(--border2); white-space: nowrap; }
   td { padding: 9px 10px; border-bottom: 0.5px solid var(--border); color: var(--text2); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   td.primary { color: var(--text); font-weight: 500; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
+  tr:hover td { background: rgba(44,62,80,0.03); }
   .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border); font-family: var(--mono); }
-  .badge.ok { background: var(--teal-soft); color: var(--teal); border-color: rgba(45,212,176,0.2); }
-  .badge.pendiente { background: var(--amber-soft); color: var(--amber); border-color: rgba(245,166,35,0.2); }
+  .badge.ok { background: var(--teal-soft); color: var(--teal); border-color: rgba(47,158,143,0.2); }
+  .badge.pendiente { background: var(--amber-soft); color: var(--amber); border-color: rgba(234,181,78,0.2); }
   .conteo { font-size: 12px; color: var(--text3); margin-top: 10px; font-family: var(--mono); }
   .error-msg { text-align: center; padding: 32px; color: var(--red); font-size: 13px; }
   .loading-row td { text-align: center; padding: 32px; color: var(--text3); }
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); margin-right: 6px; animation: pulse 2s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-  /* ─── Paleta cálida (crema/teal/naranja/dorado) para Weekly Estrategia ─── */
-  #tab7 {
-    background: #f2e6d3;
-    margin: 0 -20px -32px; padding: 24px 20px 32px;
-    border-radius: 0 0 12px 12px;
-  }
-  @media (max-width: 768px) { #tab7 { margin: 0 -16px -20px; padding: 20px 16px 20px; } }
-  #tab7 .kpi { background: #faf3e6; border: 1px solid #e3d2ae; }
-  #tab7 .kpi-label { color: #8a7d63; }
-  #tab7 .kpi.teal .kpi-value { color: #2f9e8f; }
-  #tab7 .kpi.purple .kpi-value { color: #2c3e50; }
-  #tab7 .kpi.purple::before { background: #2c3e50; }
-  #tab7 .kpi.blue .kpi-value { color: #2c3e50; }
-  #tab7 .kpi.amber .kpi-value { color: #eab54e; }
-  #tab7 .kpi.green .kpi-value { color: #2f9e8f; }
-  #tab7 .kpi.red .kpi-value { color: #e8734a; }
-  #tab7 .kpi.teal::before { background: #2f9e8f; }
-  #tab7 .kpi.blue::before { background: #2c3e50; }
-  #tab7 .kpi.amber::before { background: #eab54e; }
-  #tab7 .kpi.green::before { background: #2f9e8f; }
-  #tab7 .kpi.red::before { background: #e8734a; }
-  #tab7 .card { background: #faf3e6; border: 1px solid #e3d2ae; }
-  #tab7 .card-title { color: #2c3e50; font-weight: 700; }
-  #tab7 .filter-row label { color: #6b6152; }
-  #tab7 select {
-    background: #ffffff; border: 1px solid #e3d2ae; color: #2c3e50;
-  }
-  #tab7 th { color: #8a7d63; border-bottom-color: #e3d2ae; }
-  #tab7 td { color: #4a4338; border-bottom-color: #ece0c8; }
-  #tab7 td.primary { color: #2c3e50; }
-  #tab7 tr:hover td { background: rgba(44,62,80,0.03); }
-  #tab7 .conteo { color: #8a7d63; }
-  #tab7 p[style*="color:var(--red)"] { color: #e8734a !important; }
-  #tab7 p[style*="color:var(--teal)"] { color: #2f9e8f !important; }
 </style>
 </head>
 <body>
@@ -644,7 +609,7 @@ function getColorAnalista(nombre) {
   const key = (nombre||'').toLowerCase().trim();
   const mapped = NOMBRE_MAP[key] || Object.keys(NOMBRE_MAP).find(k => key.includes(k));
   const analista = mapped ? NOMBRE_MAP[mapped] || mapped : null;
-  return analista && COLORES[analista] ? COLORES[analista].bg : 'rgba(124,111,247,0.85)';
+  return analista && COLORES[analista] ? COLORES[analista].bg : 'rgba(232,115,74,0.85)';
 }
 const C6 = { fcl: 'FCL', eta: 'ETA', shipper: 'Shipper', fob: 'Moto FOB total', banco: 'Banco Asignado', analista: 'Analista responsable' };
 const C5 = { fcl: 'N° FCL', arribo: 'Fecha de arribo a Aduana', so: 'ID Stock Origen', invoice: 'N° Invoice', fechaInvoice: 'Fecha Invoice', responsable: 'Responsable Commercial Invoice', difDias: 'Diferencia de dias' };
@@ -852,10 +817,10 @@ function renderChartFacturas(d) {
           label: 'Promedio días',
           data: ANALISTAS.map(a => parseFloat(promDias[a].toFixed(2))),
           type: 'line',
-          borderColor: '#f06060',
-          backgroundColor: 'rgba(240,96,96,0.1)',
+          borderColor: '#e8734a',
+          backgroundColor: 'rgba(232,115,74,0.12)',
           borderWidth: 2.5,
-          pointBackgroundColor: '#f06060',
+          pointBackgroundColor: '#e8734a',
           pointRadius: 5,
           tension: 0.3,
           yAxisID: 'y2',
@@ -866,11 +831,11 @@ function renderChartFacturas(d) {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: true, labels: { color: '#8a8f9a', font: { size: 11 }, boxWidth: 12 } } },
+      plugins: { legend: { display: true, labels: { color: '#8a7d63', font: { size: 11 }, boxWidth: 12 } } },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
-        y: { position: 'left', ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, title: { display: true, text: 'Facturas', color: '#8a8f9a', font: { size: 11 } } },
-        y2: { position: 'right', ticks: { color: '#f06060', font: { size: 11 }, callback: v => v.toFixed(1) }, grid: { drawOnChartArea: false }, beginAtZero: true, title: { display: true, text: 'Días', color: '#f06060', font: { size: 11 } } }
+        x: { ticks: { color: '#8a7d63', font: { size: 13 } }, grid: { display: false } },
+        y: { position: 'left', ticks: { color: '#8a7d63', font: { size: 11 } }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true, title: { display: true, text: 'Facturas', color: '#8a7d63', font: { size: 11 } } },
+        y2: { position: 'right', ticks: { color: '#e8734a', font: { size: 11 }, callback: v => v.toFixed(1) }, grid: { drawOnChartArea: false }, beginAtZero: true, title: { display: true, text: 'Días', color: '#e8734a', font: { size: 11 } } }
       }
     }
   });
@@ -903,11 +868,11 @@ function renderChartSOs(d) {
     type: 'doughnut',
     data: {
       labels: ANALISTAS,
-      datasets: [{ data: ANALISTAS.map(a => conteo[a].size), backgroundColor: ANALISTAS.map(a => COLORES[a].bg), borderColor: '#16181c', borderWidth: 3 }]
+      datasets: [{ data: ANALISTAS.map(a => conteo[a].size), backgroundColor: ANALISTAS.map(a => COLORES[a].bg), borderColor: '#faf3e6', borderWidth: 3 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } } },
+      plugins: { legend: { display: true, position: 'right', labels: { color: '#8a7d63', font: { size: 12 }, boxWidth: 12, padding: 16 } } },
       cutout: '65%'
     }
   });
@@ -963,26 +928,26 @@ function renderChartLineas() {
         {
           label: 'Precio Invoice Total (USD)',
           data: meses.map(m => mesMap[m].precio),
-          borderColor: '#7c6ff7', backgroundColor: 'rgba(124,111,247,0.1)',
-          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#7c6ff7', tension: 0.3, fill: true
+          borderColor: '#e8734a', backgroundColor: 'rgba(232,115,74,0.12)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#e8734a', tension: 0.3, fill: true
         },
         {
           label: 'Valor Capturado (USD)',
           data: meses.map(m => mesMap[m].capturado),
-          borderColor: '#2dd4b0', backgroundColor: 'rgba(45,212,176,0.1)',
-          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#2dd4b0', tension: 0.3, fill: true
+          borderColor: '#2f9e8f', backgroundColor: 'rgba(47,158,143,0.12)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#2f9e8f', tension: 0.3, fill: true
         }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, labels: { color: '#8a7d63', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        x: { ticks: { color: '#8a7d63', font: { size: 11 } }, grid: { color: 'rgba(44,62,80,0.07)' } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true }
       }
     }
   });
@@ -1070,7 +1035,7 @@ function renderChartLineas2b(d) {
           label: 'Valor Esperado por Capturar (USD)',
           data: [esperado],
           backgroundColor: 'rgba(138,143,154,0.5)',
-          borderColor: '#8a8f9a',
+          borderColor: '#8a7d63',
           borderWidth: 2,
           borderDash: [6,4],
           borderRadius: 6
@@ -1078,13 +1043,13 @@ function renderChartLineas2b(d) {
         {
           label: 'Valor Capturado (USD)',
           data: [capturado],
-          backgroundColor: 'rgba(45,212,176,0.85)',
+          backgroundColor: 'rgba(47,158,143,0.9)',
           borderRadius: 6
         },
         {
           label: 'Valor NO Capturado (USD)',
           data: [noCapturado],
-          backgroundColor: 'rgba(240,96,96,0.85)',
+          backgroundColor: 'rgba(232,115,74,0.85)',
           borderRadius: 6
         }
       ]
@@ -1094,17 +1059,17 @@ function renderChartLineas2b(d) {
       responsive: true, maintainAspectRatio: false,
       layout: { padding: { top: 28 } },
       plugins: {
-        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, labels: { color: '#8a7d63', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } },
         datalabels: {
           anchor: 'end', align: 'top', offset: 4, clamp: true,
-          color: '#f0f0f0', font: { size: 11, weight: '500' },
+          color: '#2c3e50', font: { size: 11, weight: '500' },
           formatter: v => v > 0 ? '$ ' + (v/1000).toFixed(0) + 'k' : ''
         }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, suggestedMax: Math.max(esperado, capturado, noCapturado) * 1.15 }
+        x: { ticks: { color: '#8a7d63', font: { size: 12 } }, grid: { display: false } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true, suggestedMax: Math.max(esperado, capturado, noCapturado) * 1.15 }
       }
     }
   });
@@ -1117,13 +1082,13 @@ function renderTortaMarca(propia, terceros) {
     type: 'doughnut',
     data: {
       labels: ['Marca Propia', 'Marca de Terceros'],
-      datasets: [{ data: [propia, terceros], backgroundColor: ['rgba(124,111,247,0.85)','rgba(240,96,96,0.75)'], borderColor: '#16181c', borderWidth: 3 }]
+      datasets: [{ data: [propia, terceros], backgroundColor: ['rgba(232,115,74,0.85)','rgba(232,115,74,0.75)'], borderColor: '#faf3e6', borderWidth: 3 }]
     },
     plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, position: 'right', labels: { color: '#8a7d63', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => { const total = propia+terceros; const pct = total ? (ctx.parsed/total*100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`; } } },
         datalabels: {
           color: '#fff', font: { size: 12, weight: '600' },
@@ -1145,13 +1110,13 @@ function renderTortaNR(nuevos, repetidos) {
     type: 'doughnut',
     data: {
       labels: ['Modelos Nuevos MP', 'Modelos Repetidos MP'],
-      datasets: [{ data: [nuevos, repetidos], backgroundColor: ['rgba(45,212,176,0.85)','rgba(245,166,35,0.8)'], borderColor: '#16181c', borderWidth: 3 }]
+      datasets: [{ data: [nuevos, repetidos], backgroundColor: ['rgba(47,158,143,0.9)','rgba(234,181,78,0.8)'], borderColor: '#faf3e6', borderWidth: 3 }]
     },
     plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, position: 'right', labels: { color: '#8a7d63', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => { const total = nuevos+repetidos; const pct = total ? (ctx.parsed/total*100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`; } } },
         datalabels: {
           color: '#fff', font: { size: 12, weight: '600' },
@@ -1215,7 +1180,7 @@ function renderChartCertMP(d) {
       labels: ['Sin Certificado', 'Con Otro Certificado'],
       datasets: [{
         data: [sinCert, conCert],
-        backgroundColor: ['rgba(240,96,96,0.85)', 'rgba(45,212,176,0.85)'],
+        backgroundColor: ['rgba(232,115,74,0.85)', 'rgba(47,158,143,0.9)'],
         borderRadius: 6
       }]
     },
@@ -1227,13 +1192,13 @@ function renderChartCertMP(d) {
         tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.y} modelos` } },
         datalabels: {
           anchor: 'end', align: 'top',
-          color: '#f0f0f0', font: { size: 13, weight: '600' },
+          color: '#2c3e50', font: { size: 13, weight: '600' },
           formatter: v => v > 0 ? v : ''
         }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        x: { ticks: { color: '#8a7d63', font: { size: 13 } }, grid: { display: false } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 } }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true }
       }
     }
   });
@@ -1259,7 +1224,7 @@ function renderChartCertMP(d) {
       labels: ['Sin Certificado', 'Con Otro Certificado'],
       datasets: [{
         data: [valorNoCapSin, valorNoCapCon],
-        backgroundColor: ['rgba(240,96,96,0.85)', 'rgba(45,212,176,0.85)'],
+        backgroundColor: ['rgba(232,115,74,0.85)', 'rgba(47,158,143,0.9)'],
         borderRadius: 6
       }]
     },
@@ -1271,13 +1236,13 @@ function renderChartCertMP(d) {
         tooltip: { callbacks: { label: ctx => ` ${ctx.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } },
         datalabels: {
           anchor: 'end', align: 'top',
-          color: '#f0f0f0', font: { size: 13, weight: '600' },
+          color: '#2c3e50', font: { size: 13, weight: '600' },
           formatter: v => v > 0 ? '$ ' + v.toLocaleString('es-AR', {maximumFractionDigits:0}) : ''
         }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        x: { ticks: { color: '#8a7d63', font: { size: 13 } }, grid: { display: false } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true }
       }
     }
   });
@@ -1650,26 +1615,26 @@ function renderChartLineas8() {
         {
           label: 'Precio Invoice Total (USD)',
           data: meses.map(m => mesMap[m].precio),
-          borderColor: '#7c6ff7', backgroundColor: 'rgba(124,111,247,0.1)',
-          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#7c6ff7', tension: 0.3, fill: true
+          borderColor: '#e8734a', backgroundColor: 'rgba(232,115,74,0.12)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#e8734a', tension: 0.3, fill: true
         },
         {
           label: 'Valor Capturado (USD)',
           data: meses.map(m => mesMap[m].capturado),
-          borderColor: '#2dd4b0', backgroundColor: 'rgba(45,212,176,0.1)',
-          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#2dd4b0', tension: 0.3, fill: true
+          borderColor: '#2f9e8f', backgroundColor: 'rgba(47,158,143,0.12)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#2f9e8f', tension: 0.3, fill: true
         }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, labels: { color: '#8a7d63', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        x: { ticks: { color: '#8a7d63', font: { size: 11 } }, grid: { color: 'rgba(44,62,80,0.07)' } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true }
       }
     }
   });
@@ -1717,7 +1682,7 @@ function aplicarFiltros3() {
   const analistas = [...new Set(dFiltrado.map(r => r[C3.responsable]).filter(Boolean))].sort();
   const datosPagado = analistas.map(a => dFiltrado.filter(r => r[C3.responsable]===a && esPago(r)).reduce((s,r) => s + parsNum(r[C3.monto]), 0));
   const datosAhorro = analistas.map(a => dFiltrado.filter(r => r[C3.responsable]===a && esNC(r)).reduce((s,r) => s + Math.abs(parsNum(r[C3.monto])), 0));
-  const bgColors = analistas.map(a => COLORES[a] ? COLORES[a].bg : 'rgba(124,111,247,0.85)');
+  const bgColors = analistas.map(a => COLORES[a] ? COLORES[a].bg : 'rgba(232,115,74,0.85)');
 
   if (chartP3) chartP3.destroy();
   chartP3 = new Chart(document.getElementById('chartPagado3'), {
@@ -1727,8 +1692,8 @@ function aplicarFiltros3() {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } } },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        x: { ticks: { color: '#8a7d63', font: { size: 12 } }, grid: { display: false } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true }
       }
     }
   });
@@ -1736,11 +1701,11 @@ function aplicarFiltros3() {
   if (chartA3) chartA3.destroy();
   chartA3 = new Chart(document.getElementById('chartAhorro3'), {
     type: 'doughnut',
-    data: { labels: analistas, datasets: [{ data: datosAhorro, backgroundColor: bgColors, borderColor: '#16181c', borderWidth: 3 }] },
+    data: { labels: analistas, datasets: [{ data: datosAhorro, backgroundColor: bgColors, borderColor: '#faf3e6', borderWidth: 3 }] },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, position: 'right', labels: { color: '#8a7d63', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => ` ${ctx.label}: $ ${ctx.parsed.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
       },
       cutout: '60%'
@@ -1768,12 +1733,12 @@ function aplicarFiltros3() {
       type: 'pie',
       data: {
         labels: sorted.map(e=>e[0]),
-        datasets: [{ data: sorted.map(e=>e[1]), backgroundColor: colors.slice(0,sorted.length), borderColor: '#16181c', borderWidth: 2 }]
+        datasets: [{ data: sorted.map(e=>e[1]), backgroundColor: colors.slice(0,sorted.length), borderColor: '#faf3e6', borderWidth: 2 }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
-          legend: { display: true, position: 'bottom', labels: { color: '#8a8f9a', font: { size: 10 }, boxWidth: 10, padding: 8 } },
+          legend: { display: true, position: 'bottom', labels: { color: '#8a7d63', font: { size: 10 }, boxWidth: 10, padding: 8 } },
           tooltip: { callbacks: { label: ctx => ` ${ctx.label}: $ ${ctx.parsed.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
         }
       }
@@ -1870,10 +1835,10 @@ function aplicarFiltros4() {
           label: 'Promedio días',
           data: diasPorAnalista.map(v => parseFloat(v.toFixed(2))),
           type: 'line',
-          borderColor: '#2dd4b0',
-          backgroundColor: 'rgba(45,212,176,0.1)',
+          borderColor: '#2f9e8f',
+          backgroundColor: 'rgba(47,158,143,0.12)',
           borderWidth: 2.5,
-          pointBackgroundColor: '#2dd4b0',
+          pointBackgroundColor: '#2f9e8f',
           pointRadius: 5,
           tension: 0.3,
           yAxisID: 'y2',
@@ -1885,13 +1850,13 @@ function aplicarFiltros4() {
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, labels: { color: '#8a7d63', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => ctx.datasetIndex === 0 ? ` FCLs: ${ctx.parsed.y}` : ` Prom. días: ${ctx.parsed.y.toFixed(2)}` } }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
-        y: { position: 'left', ticks: { color: '#7c6ff7', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, title: { display: true, text: 'FCLs', color: '#7c6ff7', font: { size: 11 } } },
-        y2: { position: 'right', ticks: { color: '#2dd4b0', font: { size: 11 }, callback: v => v.toFixed(2) }, grid: { drawOnChartArea: false }, beginAtZero: true, title: { display: true, text: 'Días', color: '#2dd4b0', font: { size: 11 } } }
+        x: { ticks: { color: '#8a7d63', font: { size: 13 } }, grid: { display: false } },
+        y: { position: 'left', ticks: { color: '#e8734a', font: { size: 11 } }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true, title: { display: true, text: 'FCLs', color: '#e8734a', font: { size: 11 } } },
+        y2: { position: 'right', ticks: { color: '#2f9e8f', font: { size: 11 }, callback: v => v.toFixed(2) }, grid: { drawOnChartArea: false }, beginAtZero: true, title: { display: true, text: 'Días', color: '#2f9e8f', font: { size: 11 } } }
       }
     }
   });
@@ -1917,12 +1882,12 @@ function aplicarFiltros4() {
     type: 'doughnut',
     data: {
       labels: tortaAnalistas,
-      datasets: [{ data: tortaVals, backgroundColor: tortaColors, borderColor: '#16181c', borderWidth: 3 }]
+      datasets: [{ data: tortaVals, backgroundColor: tortaColors, borderColor: '#faf3e6', borderWidth: 3 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, position: 'right', labels: { color: '#8a7d63', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} SOs` } }
       },
       cutout: '55%'
@@ -2006,8 +1971,8 @@ function aplicarFiltros6() {
         tooltip: { callbacks: { label: ctx => ` $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        x: { ticks: { color: '#8a7d63', font: { size: 12 } }, grid: { display: false } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true }
       }
     }
   });
@@ -2020,14 +1985,14 @@ function aplicarFiltros6() {
       datasets: [{
         data: porcentajes,
         backgroundColor: verdes,
-        borderColor: '#16181c',
+        borderColor: '#faf3e6',
         borderWidth: 2
       }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 11 }, boxWidth: 10, padding: 12 } },
+        legend: { display: true, position: 'right', labels: { color: '#8a7d63', font: { size: 11 }, boxWidth: 10, padding: 12 } },
         tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } }
       },
       cutout: '55%'
@@ -2067,8 +2032,8 @@ function aplicarFiltros6() {
         tooltip: { callbacks: { label: ctx => ` $ ${ctx.parsed.x.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
       },
       scales: {
-        x: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true },
-        y: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { display: false } }
+        x: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 } }, grid: { display: false } }
       }
     }
   });
@@ -2111,7 +2076,7 @@ function aplicarFiltros6() {
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'top', labels: { color: '#8a8f9a', font: { size: 11 }, boxWidth: 10, padding: 10 } },
+        legend: { display: true, position: 'top', labels: { color: '#8a7d63', font: { size: 11 }, boxWidth: 10, padding: 10 } },
         tooltip: {
           callbacks: {
             label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}`
@@ -2119,8 +2084,8 @@ function aplicarFiltros6() {
         }
       },
       scales: {
-        x: { stacked: true, ticks: { color: '#8a8f9a', font: { size: 10 }, maxRotation: 35 }, grid: { display: false } },
-        y: { stacked: true, ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        x: { stacked: true, ticks: { color: '#8a7d63', font: { size: 10 }, maxRotation: 35 }, grid: { display: false } },
+        y: { stacked: true, ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true }
       }
     }
   });
@@ -2188,8 +2153,8 @@ function renderChartFCLsAnalista() {
         tooltip: { callbacks: { label: ctx => ` Embarques: ${ctx.parsed.y}` } }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        x: { ticks: { color: '#8a7d63', font: { size: 12 } }, grid: { display: false } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 } }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true }
       }
     }
   });
@@ -2213,12 +2178,12 @@ function renderChartFCLsAnalista() {
     type: 'doughnut',
     data: {
       labels: analistasSO,
-      datasets: [{ data: valoresSO, backgroundColor: amarillos, borderColor: '#16181c', borderWidth: 3 }]
+      datasets: [{ data: valoresSO, backgroundColor: amarillos, borderColor: '#faf3e6', borderWidth: 3 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, position: 'right', labels: { color: '#8a7d63', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} SOs` } }
       },
       cutout: '55%'
