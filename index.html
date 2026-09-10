@@ -513,18 +513,18 @@
         </div>
       </div>
     </div>
-    <!-- Gráfico certificados -->
-    <div class="card" style="margin-bottom:24px;">
-      <div class="card-title">Modelos Repetidos MP — Con vs Sin Certificado (fuente: Accionables)</div>
-      <div style="position:relative; height:280px;">
-        <canvas id="chartCertMP7"></canvas>
-      </div>
-    </div>
     <!-- Resultados -->
     <div class="card" style="margin-bottom:24px;">
       <div class="card-title">Resultados (fuente: Accionables)</div>
       <div style="position:relative; height:280px;">
         <canvas id="chartResultados7"></canvas>
+      </div>
+    </div>
+    <!-- Cumplimiento Estrategia -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Cumplimiento Estrategia (Marca Propia)</div>
+      <div style="position:relative; height:280px;">
+        <canvas id="chartCumplimiento7"></canvas>
       </div>
     </div>
     <!-- Accionables -->
@@ -616,7 +616,7 @@ const C5 = { fcl: 'N° FCL', arribo: 'Fecha de arribo a Aduana', so: 'ID Stock O
 const C1 = { responsable: 'Responsable Commercial Invoice', fcl: 'N° FCL', invoice: 'N° Invoice', arribo: 'Fecha de arribo a Aduana', deposito: 'Deposito ZFLP', fobTotal: 'FOB SIMI TOTAL', banco: 'Banco Asignado', shipper: 'Shipper', so: 'ID Stock Origen' };
 const C4 = { embarque: 'Embarque ', destino: 'Destino', pasarImpo2: 'Pasar a impo2', pasadoGD: 'PASADO POR GD', analista: 'Analista AGD', difDias: 'Dif dias', sos: 'Cantidad de SOs por embarque' };
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
-const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o Repetido', fobSIMI: 'FOB SIMI TOTAL C/Tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2', fechaMigracion: 'Fecha Migración' };
+const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o Repetido', fobSIMI: 'FOB SIMI TOTAL C/Tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2', fechaMigracion: 'Fecha Migración', topeTeorico: 'Tope teorico' };
 const C7 = { so: 'SO', marca: 'Marca', modelo: 'Modelo', cert1: 'Certificado 1', cert2: 'Certificado 2', qty: 'Qty Importaciones', eta: 'ETA', estrategia: 'Estrategia', pctAplicado: '% Aplicado', tope: 'Tope teórico', dispSin: 'Dispersión de precio sin certificado', dispCon: 'Dispersión de precio con certificado', fechaMigracion: 'Fecha Migración', valorCapturado: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', valorNoCapturado: 'Valor no capturado' };
 
 let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [], datos7 = [];
@@ -1342,6 +1342,7 @@ function aplicarFiltros7() {
   const d7 = filtrarSemana(datos7, C7.fechaMigracion, 'filtroSemana7');
   renderChartCertMP7(d7, totalModelos);
   renderResultados7(d7);
+  renderCumplimientoEstrategia7(d);
 }
 
 let chartL7b = null;
@@ -1466,7 +1467,6 @@ function renderTortaNR7(nuevos, repetidos) {
   });
 }
 
-let chartCertMP7 = null;
 function tieneValor(v) { return v !== undefined && v !== null && String(v).trim() !== ''; }
 
 function renderChartCertMP7(d, totalModelos) {
@@ -1480,9 +1480,6 @@ function renderChartCertMP7(d, totalModelos) {
 
   const listaSinCert = Object.entries(mapSin).sort((a,b) => a[0].localeCompare(b[0]));
   const listaConCert = Object.entries(mapCon).sort((a,b) => a[0].localeCompare(b[0]));
-  const sinCert = listaSinCert.length;
-  const conCert = listaConCert.length;
-  const totalRef = totalModelos > 0 ? totalModelos : (sinCert + conCert);
 
   const tbodySin = document.getElementById('tbodySinCert7');
   const tbodyCon = document.getElementById('tbodyConCert7');
@@ -1498,15 +1495,31 @@ function renderChartCertMP7(d, totalModelos) {
       : '<tr><td colspan="3" style="color:var(--text3);">Sin resultados</td></tr>';
     document.getElementById('conteoConCert7').textContent = `${listaConCert.length} modelo${listaConCert.length!==1?'s':''}`;
   }
+}
 
-  if (chartCertMP7) chartCertMP7.destroy();
-  chartCertMP7 = new Chart(document.getElementById('chartCertMP7'), {
+let chartCumplimiento7 = null;
+function renderCumplimientoEstrategia7(d) {
+  const propia = d.filter(r => (r[C2.tipoMarca]||'').toLowerCase().includes('propia'));
+
+  const calc = estrategiaNombre => {
+    const filas = propia.filter(r => (r[C2.estrategia]||'').trim().toLowerCase() === estrategiaNombre);
+    const meta = filas.reduce((s,r) => s + parsNum(r[C2.fobSIMI]), 0);
+    const real = filas.reduce((s,r) => s + parsNum(r[C2.fobAsignado]), 0);
+    const pct = meta > 0 ? (real / meta * 100) : 0;
+    return { pct, meta, real };
+  };
+
+  const sub = calc('sub');
+  const sobre = calc('sobre');
+
+  if (chartCumplimiento7) chartCumplimiento7.destroy();
+  chartCumplimiento7 = new Chart(document.getElementById('chartCumplimiento7'), {
     type: 'bar',
     data: {
-      labels: ['Sin Certificado', 'Con Certificado'],
+      labels: ['SUB', 'SOBRE'],
       datasets: [{
-        data: [sinCert, conCert],
-        backgroundColor: ['rgba(240,96,96,0.85)', 'rgba(45,212,176,0.85)'],
+        data: [sub.pct, sobre.pct],
+        backgroundColor: ['rgba(56,189,248,0.85)', 'rgba(245,166,35,0.85)'],
         borderRadius: 6
       }]
     },
@@ -1517,22 +1530,22 @@ function renderChartCertMP7(d, totalModelos) {
       plugins: {
         legend: { display: false },
         tooltip: { callbacks: { label: ctx => {
-          const pct = totalRef > 0 ? (ctx.parsed.y/totalRef*100).toFixed(1) : 0;
-          return ` ${ctx.label}: ${ctx.parsed.y} modelos (${pct}% del Total Modelos)`;
+          const info = ctx.dataIndex === 0 ? sub : sobre;
+          return [
+            ` Cumplimiento: ${ctx.parsed.y.toFixed(1)}%`,
+            ` FOB SIMI TOTAL C/Tope (meta): $ ${info.meta.toLocaleString('es-AR', {maximumFractionDigits:0})}`,
+            ` FOB asignado total (real): $ ${info.real.toLocaleString('es-AR', {maximumFractionDigits:0})}`
+          ];
         } } },
         datalabels: {
           anchor: 'end', align: 'top', offset: 4, clamp: true,
           color: '#f0f0f0', font: { size: 13, weight: '600' },
-          formatter: v => {
-            if (v <= 0) return '';
-            const pct = totalRef > 0 ? (v/totalRef*100).toFixed(1) : 0;
-            return v + ' (' + pct + '%)';
-          }
+          formatter: v => v.toFixed(1) + '%'
         }
       },
       scales: {
         x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, suggestedMax: Math.max(sinCert, conCert) * 1.2 }
+        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, suggestedMax: Math.max(sub.pct, sobre.pct, 100) * 1.15 }
       }
     }
   });
