@@ -124,6 +124,41 @@
   .loading-row td { text-align: center; padding: 32px; color: var(--text3); }
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); margin-right: 6px; animation: pulse 2s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* ─── Paleta cálida (crema/teal/naranja/dorado) para Weekly Estrategia ─── */
+  #tab7 {
+    background: #f2e6d3;
+    margin: 0 -20px -32px; padding: 24px 20px 32px;
+    border-radius: 0 0 12px 12px;
+  }
+  @media (max-width: 768px) { #tab7 { margin: 0 -16px -20px; padding: 20px 16px 20px; } }
+  #tab7 .kpi { background: #faf3e6; border: 1px solid #e3d2ae; }
+  #tab7 .kpi-label { color: #8a7d63; }
+  #tab7 .kpi.teal .kpi-value { color: #2f9e8f; }
+  #tab7 .kpi.purple .kpi-value { color: #2c3e50; }
+  #tab7 .kpi.purple::before { background: #2c3e50; }
+  #tab7 .kpi.blue .kpi-value { color: #2c3e50; }
+  #tab7 .kpi.amber .kpi-value { color: #eab54e; }
+  #tab7 .kpi.green .kpi-value { color: #2f9e8f; }
+  #tab7 .kpi.red .kpi-value { color: #e8734a; }
+  #tab7 .kpi.teal::before { background: #2f9e8f; }
+  #tab7 .kpi.blue::before { background: #2c3e50; }
+  #tab7 .kpi.amber::before { background: #eab54e; }
+  #tab7 .kpi.green::before { background: #2f9e8f; }
+  #tab7 .kpi.red::before { background: #e8734a; }
+  #tab7 .card { background: #faf3e6; border: 1px solid #e3d2ae; }
+  #tab7 .card-title { color: #2c3e50; font-weight: 700; }
+  #tab7 .filter-row label { color: #6b6152; }
+  #tab7 select {
+    background: #ffffff; border: 1px solid #e3d2ae; color: #2c3e50;
+  }
+  #tab7 th { color: #8a7d63; border-bottom-color: #e3d2ae; }
+  #tab7 td { color: #4a4338; border-bottom-color: #ece0c8; }
+  #tab7 td.primary { color: #2c3e50; }
+  #tab7 tr:hover td { background: rgba(44,62,80,0.03); }
+  #tab7 .conteo { color: #8a7d63; }
+  #tab7 p[style*="color:var(--red)"] { color: #e8734a !important; }
+  #tab7 p[style*="color:var(--teal)"] { color: #2f9e8f !important; }
 </style>
 </head>
 <body>
@@ -1271,26 +1306,26 @@ function renderChartLineas7() {
         {
           label: 'Precio Invoice Total (USD)',
           data: semanas.map(s => semMap[s].precio),
-          borderColor: '#7c6ff7', backgroundColor: 'rgba(124,111,247,0.1)',
-          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#7c6ff7', tension: 0.3, fill: true
+          borderColor: '#e8734a', backgroundColor: 'rgba(232,115,74,0.12)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#e8734a', tension: 0.3, fill: true
         },
         {
           label: 'Valor Capturado (USD)',
           data: semanas.map(s => semMap[s].capturado),
-          borderColor: '#2dd4b0', backgroundColor: 'rgba(45,212,176,0.1)',
-          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#2dd4b0', tension: 0.3, fill: true
+          borderColor: '#2f9e8f', backgroundColor: 'rgba(47,158,143,0.12)',
+          borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#2f9e8f', tension: 0.3, fill: true
         }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, labels: { color: '#6b6152', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})}` } }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+        x: { ticks: { color: '#8a7d63', font: { size: 11 } }, grid: { color: 'rgba(44,62,80,0.07)' } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true }
       }
     }
   });
@@ -1363,8 +1398,8 @@ function renderChartLineas7b(d) {
         {
           label: 'Valor Esperado por Capturar (USD)',
           data: [esperado],
-          backgroundColor: 'rgba(138,143,154,0.5)',
-          borderColor: '#8a8f9a',
+          backgroundColor: 'rgba(139,122,99,0.25)',
+          borderColor: '#8a7d63',
           borderWidth: 2,
           borderDash: [6,4],
           borderRadius: 6
@@ -1372,13 +1407,13 @@ function renderChartLineas7b(d) {
         {
           label: 'Valor Capturado (USD)',
           data: [capturado],
-          backgroundColor: 'rgba(45,212,176,0.85)',
+          backgroundColor: 'rgba(47,158,143,0.9)',
           borderRadius: 6
         },
         {
           label: 'Valor NO Capturado (USD)',
           data: [noCapturado],
-          backgroundColor: 'rgba(240,96,96,0.85)',
+          backgroundColor: 'rgba(232,115,74,0.9)',
           borderRadius: 6
         }
       ]
@@ -1388,14 +1423,14 @@ function renderChartLineas7b(d) {
       responsive: true, maintainAspectRatio: false,
       layout: { padding: { top: 28 } },
       plugins: {
-        legend: { display: true, labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, labels: { color: '#6b6152', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => {
           const pct = esperado > 0 ? (ctx.parsed.y/esperado*100).toFixed(1) : 0;
           return ` ${ctx.dataset.label}: $ ${ctx.parsed.y.toLocaleString('es-AR', {minimumFractionDigits:0})} (${pct}%)`;
         } } },
         datalabels: {
           anchor: 'end', align: 'top', offset: 4, clamp: true,
-          color: '#f0f0f0', font: { size: 11, weight: '500' },
+          color: '#2c3e50', font: { size: 11, weight: '600' },
           formatter: v => {
             if (v <= 0) return '';
             const pct = esperado > 0 ? (v/esperado*100).toFixed(1) : 0;
@@ -1404,8 +1439,8 @@ function renderChartLineas7b(d) {
         }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 12 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, suggestedMax: Math.max(esperado, capturado, noCapturado) * 1.15 }
+        x: { ticks: { color: '#8a7d63', font: { size: 12 } }, grid: { display: false } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true, suggestedMax: Math.max(esperado, capturado, noCapturado) * 1.15 }
       }
     }
   });
@@ -1418,13 +1453,13 @@ function renderTortaMarca7(propia, terceros) {
     type: 'doughnut',
     data: {
       labels: ['Marca Propia', 'Marca de Terceros'],
-      datasets: [{ data: [propia, terceros], backgroundColor: ['rgba(124,111,247,0.85)','rgba(240,96,96,0.75)'], borderColor: '#16181c', borderWidth: 3 }]
+      datasets: [{ data: [propia, terceros], backgroundColor: ['rgba(47,158,143,0.9)','rgba(232,115,74,0.85)'], borderColor: '#faf3e6', borderWidth: 3 }]
     },
     plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, position: 'right', labels: { color: '#6b6152', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => { const total = propia+terceros; const pct = total ? (ctx.parsed/total*100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`; } } },
         datalabels: {
           color: '#fff', font: { size: 12, weight: '600' },
@@ -1446,13 +1481,13 @@ function renderTortaNR7(nuevos, repetidos) {
     type: 'doughnut',
     data: {
       labels: ['Modelos Nuevos MP', 'Modelos Repetidos MP'],
-      datasets: [{ data: [nuevos, repetidos], backgroundColor: ['rgba(45,212,176,0.85)','rgba(245,166,35,0.8)'], borderColor: '#16181c', borderWidth: 3 }]
+      datasets: [{ data: [nuevos, repetidos], backgroundColor: ['rgba(47,158,143,0.9)','rgba(234,181,78,0.9)'], borderColor: '#faf3e6', borderWidth: 3 }]
     },
     plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, position: 'right', labels: { color: '#6b6152', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => { const total = nuevos+repetidos; const pct = total ? (ctx.parsed/total*100).toFixed(1) : 0; return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`; } } },
         datalabels: {
           color: '#fff', font: { size: 12, weight: '600' },
@@ -1519,7 +1554,7 @@ function renderCumplimientoEstrategia7(d) {
       labels: ['SUB', 'SOBRE'],
       datasets: [{
         data: [sub.pct, sobre.pct],
-        backgroundColor: ['rgba(56,189,248,0.85)', 'rgba(245,166,35,0.85)'],
+        backgroundColor: ['rgba(47,158,143,0.9)', 'rgba(232,115,74,0.9)'],
         borderRadius: 6
       }]
     },
@@ -1539,13 +1574,13 @@ function renderCumplimientoEstrategia7(d) {
         } } },
         datalabels: {
           anchor: 'end', align: 'top', offset: 4, clamp: true,
-          color: '#f0f0f0', font: { size: 13, weight: '600' },
+          color: '#2c3e50', font: { size: 13, weight: '700' },
           formatter: v => v.toFixed(1) + '%'
         }
       },
       scales: {
-        x: { ticks: { color: '#8a8f9a', font: { size: 13 } }, grid: { display: false } },
-        y: { ticks: { color: '#555a66', font: { size: 11 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true, suggestedMax: Math.max(sub.pct, sobre.pct, 100) * 1.15 }
+        x: { ticks: { color: '#8a7d63', font: { size: 13 } }, grid: { display: false } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => v + '%' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true, suggestedMax: Math.max(sub.pct, sobre.pct, 100) * 1.15 }
       }
     }
   });
@@ -1562,13 +1597,13 @@ function renderResultados7(d) {
     type: 'doughnut',
     data: {
       labels: ['Valor Capturado', 'Valor No Capturado'],
-      datasets: [{ data: [capturado, noCapturado], backgroundColor: ['rgba(45,212,176,0.85)','rgba(240,96,96,0.8)'], borderColor: '#16181c', borderWidth: 3 }]
+      datasets: [{ data: [capturado, noCapturado], backgroundColor: ['rgba(47,158,143,0.9)','rgba(232,115,74,0.85)'], borderColor: '#faf3e6', borderWidth: 3 }]
     },
     plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'right', labels: { color: '#8a8f9a', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        legend: { display: true, position: 'right', labels: { color: '#6b6152', font: { size: 12 }, boxWidth: 12, padding: 16 } },
         tooltip: { callbacks: { label: ctx => {
           const pct = total > 0 ? (ctx.parsed/total*100).toFixed(1) : 0;
           return ` ${ctx.label}: $ ${ctx.parsed.toLocaleString('es-AR', {minimumFractionDigits:0})} (${pct}%)`;
