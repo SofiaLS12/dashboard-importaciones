@@ -772,8 +772,20 @@ function agruparPorFCL(datos) {
 
 function aplicarFiltros1() {
   const d = filtrarMes(datos1, C1.arribo, 'filtroMes1');
-  document.getElementById('kpi-facturas').textContent = new Set(d.map(r=>r[C1.invoice]).filter(Boolean)).size.toLocaleString();
-  document.getElementById('kpi-sos').textContent = new Set(d.map(r=>r[C1.so]).filter(Boolean)).size.toLocaleString();
+
+  // KPIs Total Facturas / Total SOs: fuente Fecha fc julio, filtrado por Fecha Creación de Factura (col E)
+  const mes = document.getElementById('filtroMes1').value;
+  let d5kpi = datos5;
+  if (mes) {
+    const [y, mo] = mes.split('-').map(Number);
+    d5kpi = datos5.filter(r => {
+      const f = parseFecha(r[C5.fechaInvoice]);
+      return f && f.getFullYear() === y && f.getMonth()+1 === mo;
+    });
+  }
+  document.getElementById('kpi-facturas').textContent = new Set(d5kpi.map(r=>r[C5.invoice]).filter(Boolean)).size.toLocaleString();
+  document.getElementById('kpi-sos').textContent = new Set(d5kpi.map(r=>r[C5.so]).filter(Boolean)).size.toLocaleString();
+
   renderChartFacturas(d); renderChartSOs(d); renderTabla1(d);
   renderChartDias15();
 }
