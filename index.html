@@ -537,6 +537,12 @@
         <canvas id="chartCumplimiento7"></canvas>
       </div>
     </div>
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Cumplimiento Estrategia (Marca de Terceros)</div>
+      <div style="position:relative; height:280px;">
+        <canvas id="chartCumplimientoTerceros7"></canvas>
+      </div>
+    </div>
     <!-- Accionables -->
     <div class="card">
       <div class="card-title">Accionables</div>
@@ -803,38 +809,55 @@ function renderChartDias15() {
     });
   }
 
-  // Cantidad de embarques (FCL únicos) con más de 15 días vs 15 días o menos
-  const masDe15 = new Set(), hasta15 = new Set();
+  // Cantidad de embarques (identificadores únicos de N° FCL) con más de 15 días vs 15 días o menos,
+  // desglosados por modo de transporte (AIR o FCL, según el texto de la propia columna N° FCL)
+  const grupos = {
+    masDe15: { air: new Set(), fcl: new Set() },
+    hasta15: { air: new Set(), fcl: new Set() }
+  };
   d5.forEach(r => {
-    const fcl = (r[C5.fcl]||'').trim();
-    if (!fcl) return;
-    const dias = parsNum(r[C5.difDias]);
+    const embarque = (r[C5.fcl]||'').trim();
+    if (!embarque) return;
     if ((r[C5.difDias]||'').toString().trim() === '') return;
-    if (dias > 15) masDe15.add(fcl); else hasta15.add(fcl);
+    const dias = parsNum(r[C5.difDias]);
+    const bucket = dias > 15 ? grupos.masDe15 : grupos.hasta15;
+    const modo = embarque.toUpperCase().includes('AIR') ? 'air' : 'fcl';
+    bucket[modo].add(embarque);
   });
+
+  const masDe15Air = grupos.masDe15.air.size, masDe15Fcl = grupos.masDe15.fcl.size;
+  const hasta15Air = grupos.hasta15.air.size, hasta15Fcl = grupos.hasta15.fcl.size;
 
   if (chartDias15) chartDias15.destroy();
   chartDias15 = new Chart(document.getElementById('chartDias15'), {
     type: 'bar',
     data: {
       labels: ['Más de 15 días', '15 días o menos'],
-      datasets: [{
-        label: 'Embarques',
-        data: [masDe15.size, hasta15.size],
-        backgroundColor: ['rgba(232,115,74,0.9)', 'rgba(47,158,143,0.9)'],
-        borderRadius: 6
-      }]
+      datasets: [
+        {
+          label: 'FCL',
+          data: [masDe15Fcl, hasta15Fcl],
+          backgroundColor: 'rgba(47,158,143,0.9)',
+          borderRadius: 6
+        },
+        {
+          label: 'AIR',
+          data: [masDe15Air, hasta15Air],
+          backgroundColor: 'rgba(234,181,78,0.9)',
+          borderRadius: 6
+        }
+      ]
     },
     plugins: [ChartDataLabels],
     options: {
       responsive: true, maintainAspectRatio: false,
       layout: { padding: { top: 28 } },
       plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ` Embarques: ${ctx.parsed.y}` } },
+        legend: { display: true, labels: { color: '#6b6152', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} embarques` } },
         datalabels: {
           anchor: 'end', align: 'top', offset: 4, clamp: true,
-          color: '#2c3e50', font: { size: 13, weight: '600' },
+          color: '#2c3e50', font: { size: 12, weight: '600' },
           formatter: v => v > 0 ? v : ''
         }
       },
@@ -1578,11 +1601,12 @@ function renderChartCertMP7(d, totalModelos) {
 }
 
 let chartCumplimiento7 = null;
-function renderCumplimientoEstrategia7(d) {
-  const propia = d.filter(r => (r[C2.tipoMarca]||'').toLowerCase().includes('propia'));
+let chartCumplimientoTerceros7 = null;
+function _renderCumplimientoChart(d, marcaFiltro, canvasId, prevChart) {
+  const filtradas = d.filter(r => (r[C2.tipoMarca]||'').toLowerCase().includes(marcaFiltro));
 
   const calc = estrategiaNombre => {
-    const filas = propia.filter(r => (r[C2.estrategia]||'').trim().toLowerCase() === estrategiaNombre);
+    const filas = filtradas.filter(r => (r[C2.estrategia]||'').trim().toLowerCase() === estrategiaNombre);
     const meta = filas.reduce((s,r) => s + parsNum(r[C2.fobSIMI]), 0);
     const real = filas.reduce((s,r) => s + parsNum(r[C2.fobAsignado]), 0);
     const pct = meta > 0 ? (real / meta * 100) : 0;
@@ -1592,8 +1616,8 @@ function renderCumplimientoEstrategia7(d) {
   const sub = calc('sub');
   const sobre = calc('sobre');
 
-  if (chartCumplimiento7) chartCumplimiento7.destroy();
-  chartCumplimiento7 = new Chart(document.getElementById('chartCumplimiento7'), {
+  if (prevChart) prevChart.destroy();
+  const chart = new Chart(document.getElementById(canvasId), {
     type: 'bar',
     data: {
       labels: ['SUB', 'SOBRE'],
@@ -1629,6 +1653,12 @@ function renderCumplimientoEstrategia7(d) {
       }
     }
   });
+  return chart;
+}
+
+function renderCumplimientoEstrategia7(d) {
+  chartCumplimiento7 = _renderCumplimientoChart(d, 'propia', 'chartCumplimiento7', chartCumplimiento7);
+  chartCumplimientoTerceros7 = _renderCumplimientoChart(d, 'tercero', 'chartCumplimientoTerceros7', chartCumplimientoTerceros7);
 }
 
 let chartResultados7 = null;
