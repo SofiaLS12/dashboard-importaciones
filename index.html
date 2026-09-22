@@ -529,13 +529,6 @@
         </div>
       </div>
     </div>
-    <!-- Resultados -->
-    <div class="card" style="margin-bottom:24px;">
-      <div class="card-title">Resultados (fuente: Accionables)</div>
-      <div style="position:relative; height:280px;">
-        <canvas id="chartResultados7"></canvas>
-      </div>
-    </div>
     <!-- Cumplimiento Estrategia -->
     <div class="card" style="margin-bottom:24px;">
       <div class="card-title">Cumplimiento Estrategia (Marca Propia)</div>
@@ -549,10 +542,10 @@
         <canvas id="chartCumplimientoTerceros7"></canvas>
       </div>
     </div>
-    <!-- Tendencia Dispersión de Precio -->
+    <!-- Dispersión de Precio de la semana seleccionada -->
     <div class="card" style="margin-bottom:24px;">
-      <div class="card-title">Tendencia de Dispersión de Precio — Peores Modelos Repetidos (histórico, fuente: Accionables)</div>
-      <div style="position:relative; height:320px;">
+      <div class="card-title">Dispersión de Precio por Modelo — Semana Seleccionada (fuente: Accionables)</div>
+      <div style="position:relative; height:340px;">
         <canvas id="chartTendenciaDispersion7"></canvas>
       </div>
     </div>
@@ -561,13 +554,6 @@
       <div class="card-title">Cumplimiento Estrategia según Certificado (Marca Propia)</div>
       <div style="position:relative; height:280px;">
         <canvas id="chartCumplimientoCert7"></canvas>
-      </div>
-    </div>
-    <!-- Costo de la falta de certificación -->
-    <div class="card" style="margin-bottom:24px;">
-      <div class="card-title">Costo de la Falta de Certificación — Valor NO Capturado (USD)</div>
-      <div style="position:relative; height:280px;">
-        <canvas id="chartCostoCert7"></canvas>
       </div>
     </div>
     <!-- Accionables -->
@@ -624,25 +610,11 @@
         <canvas id="chartLineas8"></canvas>
       </div>
     </div>
-    <!-- Tendencia Dispersión de Precio -->
-    <div class="card" style="margin-bottom:24px;">
-      <div class="card-title">Tendencia de Dispersión de Precio — Peores Modelos Repetidos (histórico, fuente: Accionables)</div>
-      <div style="position:relative; height:320px;">
-        <canvas id="chartTendenciaDispersion8"></canvas>
-      </div>
-    </div>
-    <!-- Cumplimiento vs Certificado -->
-    <div class="card" style="margin-bottom:24px;">
-      <div class="card-title">Cumplimiento Estrategia según Certificado (Marca Propia)</div>
-      <div style="position:relative; height:280px;">
-        <canvas id="chartCumplimientoCert8"></canvas>
-      </div>
-    </div>
-    <!-- Costo de la falta de certificación -->
+    <!-- Rdo mensual: SUB vs SOBRE -->
     <div class="card">
-      <div class="card-title">Costo de la Falta de Certificación — Valor NO Capturado (USD)</div>
-      <div style="position:relative; height:280px;">
-        <canvas id="chartCostoCert8"></canvas>
+      <div class="card-title">Rdo Estrategia Declaración TOTAL — SUB vs SOBRE (fuente: Rdo mensual)</div>
+      <div style="position:relative; height:320px; max-width:480px; margin:0 auto;">
+        <canvas id="chartRdoMensual8"></canvas>
       </div>
     </div>
   </div>
@@ -657,6 +629,7 @@ const CSV4 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7B
 const CSV5 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk7foMlo3TQCU-ry7I8/export?format=csv&gid=1641862340'; // Fecha fc julio (spreadsheet "KPI prueba")
 const CSV6 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=757044906&single=true&output=csv';
 const CSV7 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk7foMlo3TQCU-ry7I8/export?format=csv&gid=262098150'; // Accionables (spreadsheet "KPI prueba")
+const CSV8 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk7foMlo3TQCU-ry7I8/export?format=csv&gid=1376419654'; // Rdo mensual (spreadsheet "KPI prueba")
 
 const ANALISTAS = ['Luciana', 'Florencia', 'Aymara'];
 const COLORES = {
@@ -682,8 +655,9 @@ const C4 = { embarque: 'Embarque ', destino: 'Destino', pasarImpo2: 'Pasar a imp
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o Repetido', fobSIMI: 'FOB SIMI TOTAL C/Tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2', fechaMigracion: 'Fecha Migración', topeTeorico: 'Tope teorico' };
 const C7 = { so: 'SO', marca: 'Marca', modelo: 'Modelo', cert1: 'Certificado 1', cert2: 'Certificado 2', qty: 'Qty Importaciones', eta: 'ETA', estrategia: 'Estrategia', pctAplicado: '% Aplicado', tope: 'Tope teórico', dispSin: 'Dispersión de precio sin certificado', dispCon: 'Dispersión de precio con certificado', fechaMigracion: 'Fecha Migración', valorCapturado: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', valorNoCapturado: 'Valor no capturado' };
+const C8 = { modelo: 'Modelo', precioInvoice: 'Precio Invoice USD', fobSimiUnit: 'FOB SIMI Unitario', cantidad: 'Cantidad', pctDeclaracion: '% Declaracion', estrategia: 'Estrategia Declaracion', rdoEstrategia: 'Rdo Estrategia Declaracion', despacho: 'N° Despacho', fechaOficializacion: 'Fecha Oficialización', mesAno: 'MES / AÑO', fobInvoiceTotal: 'FOB Invoice Total', fobSimiTotal: 'FOB SIMI Total', rdoTotal: 'Rdo Estrategia Declaracion TOTAL', topeTeorico: 'Tope Teorico' };
 
-let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [], datos7 = [];
+let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [], datos7 = [], datosRdoMensual = [];
 let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTD4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null, chartSOA6 = null;
 
 function parseFecha(str) {
@@ -1492,17 +1466,13 @@ function aplicarFiltros7() {
 
   const d7 = filtrarSemana(datos7, C7.fechaMigracion, 'filtroSemana7');
   renderChartCertMP7(d7, totalModelos);
-  renderResultados7(d7);
   renderCumplimientoEstrategia7(d);
 
-  chartTendenciaDispersion7 = _renderTendenciaDispersion('chartTendenciaDispersion7', chartTendenciaDispersion7,
-    f => claveSemana(f), c => { const [y,w] = c.split('-W'); return 'Sem ' + parseInt(w,10) + " '" + y.slice(-2); });
+  chartTendenciaDispersion7 = _renderDispersionPeriodo('chartTendenciaDispersion7', chartTendenciaDispersion7, d7);
   chartCumplimientoCert7 = _renderCumplimientoCertificado('chartCumplimientoCert7', chartCumplimientoCert7, d, d7);
-  chartCostoCert7 = _renderCostoCertificacion('chartCostoCert7', chartCostoCert7, d7);
 }
 let chartTendenciaDispersion7 = null;
 let chartCumplimientoCert7 = null;
-let chartCostoCert7 = null;
 
 let chartL7b = null;
 function renderChartLineas7b(d) {
@@ -1717,44 +1687,7 @@ function renderCumplimientoEstrategia7(d) {
   chartCumplimientoTerceros7 = _renderCumplimientoChart(d, 'tercero', 'chartCumplimientoTerceros7', chartCumplimientoTerceros7);
 }
 
-let chartResultados7 = null;
-function renderResultados7(d) {
-  const capturado = d.reduce((s,r) => s + parsNum(r[C7.valorCapturado]), 0);
-  const noCapturado = d.reduce((s,r) => s + Math.abs(parsNum(r[C7.valorNoCapturado])), 0);
-  const total = capturado + noCapturado;
-
-  if (chartResultados7) chartResultados7.destroy();
-  chartResultados7 = new Chart(document.getElementById('chartResultados7'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Valor Capturado', 'Valor No Capturado'],
-      datasets: [{ data: [capturado, noCapturado], backgroundColor: ['rgba(47,158,143,0.9)','rgba(232,115,74,0.85)'], borderColor: '#faf3e6', borderWidth: 3 }]
-    },
-    plugins: [ChartDataLabels],
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, position: 'right', labels: { color: '#6b6152', font: { size: 12 }, boxWidth: 12, padding: 16 } },
-        tooltip: { callbacks: { label: ctx => {
-          const pct = total > 0 ? (ctx.parsed/total*100).toFixed(1) : 0;
-          return ` ${ctx.label}: $ ${ctx.parsed.toLocaleString('es-AR', {minimumFractionDigits:0})} (${pct}%)`;
-        } } },
-        datalabels: {
-          color: '#fff', font: { size: 12, weight: '600' },
-          formatter: (v, ctx) => {
-            const t = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
-            if (!t || v <= 0) return '';
-            const pct = (v/t*100).toFixed(1);
-            return '$ ' + (v/1000).toFixed(0) + 'k (' + pct + '%)';
-          }
-        }
-      },
-      cutout: '55%'
-    }
-  });
-}
-
-// ─── INSIGHTS COMPARTIDOS (Tendencia Dispersión, Cumplimiento vs Certificado, Costo de Certificación) ───
+// ─── INSIGHTS COMPARTIDOS (Dispersión por período, Cumplimiento vs Certificado) ───
 const PALETA_LINEAS = ['#2f9e8f','#e8734a','#eab54e','#2c3e50','#8a5fbf','#c1447e','#5b8c5a','#b0793a','#4a90a4','#a45c5c'];
 
 // Clasifica cada fila de Accionables como Sin/Con certificado según qué columna de dispersión tiene valor
@@ -1769,64 +1702,68 @@ function _clasificarCertificado(datos7Filtrado) {
   return { modelosSinCert: Object.keys(mapSin), modelosConCert: Object.keys(mapCon) };
 }
 
-// Tendencia de dispersión de precio por modelo a lo largo del tiempo (histórico completo, no depende del filtro activo)
-function _renderTendenciaDispersion(canvasId, prevChart, claveFn, labelFn) {
-  const porModeloYClave = {};
-  datos7.forEach(r => {
-    const f = parseFecha(r[C7.fechaMigracion]);
-    if (!f || isNaN(f)) return;
+// Dispersión de precio por modelo, solo del período seleccionado (semana o mes), no acumulado
+function _renderDispersionPeriodo(canvasId, prevChart, d7Filtrado) {
+  const porModelo = {};
+  d7Filtrado.forEach(r => {
     const modelo = r[C7.modelo];
     if (!modelo) return;
-    let val = null;
-    if (tieneValor(r[C7.dispSin])) val = parsNum(r[C7.dispSin]);
-    else if (tieneValor(r[C7.dispCon])) val = parsNum(r[C7.dispCon]);
+    let val = null, tipo = null;
+    if (tieneValor(r[C7.dispSin])) { val = parsNum(r[C7.dispSin]); tipo = 'sin'; }
+    else if (tieneValor(r[C7.dispCon])) { val = parsNum(r[C7.dispCon]); tipo = 'con'; }
     if (val === null || isNaN(val)) return;
-    const clave = claveFn(f);
-    porModeloYClave[modelo] = porModeloYClave[modelo] || {};
-    (porModeloYClave[modelo][clave] = porModeloYClave[modelo][clave] || []).push(val);
+    if (!porModelo[modelo]) porModelo[modelo] = { vals: [], tipo, marca: r[C7.marca] || '—' };
+    porModelo[modelo].vals.push(val);
   });
 
-  const porModeloProm = {};
-  Object.entries(porModeloYClave).forEach(([modelo, claves]) => {
-    porModeloProm[modelo] = {};
-    Object.entries(claves).forEach(([clave, vals]) => {
-      porModeloProm[modelo][clave] = vals.reduce((a,b)=>a+b,0) / vals.length;
-    });
-  });
-
-  const peores = Object.entries(porModeloProm)
-    .map(([modelo, claves]) => ({ modelo, max: Math.max(...Object.values(claves).map(Math.abs)) }))
-    .sort((a,b) => b.max - a.max)
-    .slice(0, 8)
-    .map(x => x.modelo);
-
-  const todasClaves = new Set();
-  peores.forEach(m => Object.keys(porModeloProm[m]).forEach(c => todasClaves.add(c)));
-  const clavesOrdenadas = [...todasClaves].sort();
-  const labels = clavesOrdenadas.map(labelFn);
-
-  const datasets = peores.map((modelo, i) => ({
-    label: modelo,
-    data: clavesOrdenadas.map(c => porModeloProm[modelo][c] !== undefined ? porModeloProm[modelo][c] : null),
-    borderColor: PALETA_LINEAS[i % PALETA_LINEAS.length],
-    backgroundColor: 'transparent',
-    borderWidth: 2, pointRadius: 3, pointBackgroundColor: PALETA_LINEAS[i % PALETA_LINEAS.length],
-    tension: 0.25, spanGaps: true
-  }));
+  const lista = Object.entries(porModelo)
+    .map(([modelo, info]) => ({
+      modelo,
+      marca: info.marca,
+      tipo: info.tipo,
+      valor: info.vals.reduce((a,b)=>a+b,0) / info.vals.length
+    }))
+    .sort((a,b) => Math.abs(b.valor) - Math.abs(a.valor))
+    .slice(0, 20);
 
   if (prevChart) prevChart.destroy();
   return new Chart(document.getElementById(canvasId), {
-    type: 'line',
-    data: { labels, datasets },
+    type: 'bar',
+    data: {
+      labels: lista.map(x => x.modelo),
+      datasets: [{
+        label: 'Dispersión de precio',
+        data: lista.map(x => x.valor),
+        backgroundColor: lista.map(x => x.tipo === 'sin' ? 'rgba(232,115,74,0.9)' : 'rgba(47,158,143,0.9)'),
+        borderRadius: 5
+      }]
+    },
+    plugins: [ChartDataLabels],
     options: {
+      indexAxis: 'y',
       responsive: true, maintainAspectRatio: false,
+      layout: { padding: { right: 48 } },
       plugins: {
-        legend: { display: true, position: 'bottom', labels: { color: '#6b6152', font: { size: 11 }, boxWidth: 10, padding: 10 } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(1) + '%' : 's/d'}` } }
+        legend: { display: false },
+        tooltip: { callbacks: {
+          label: ctx => {
+            const item = lista[ctx.dataIndex];
+            return [
+              ` Dispersión: ${item.valor.toFixed(2)}%`,
+              ` Marca: ${item.marca}`,
+              ` ${item.tipo === 'sin' ? 'Sin certificado' : 'Con certificado'}`
+            ];
+          }
+        } },
+        datalabels: {
+          anchor: 'end', align: 'right', offset: 4, clamp: true,
+          color: '#2c3e50', font: { size: 11, weight: '600' },
+          formatter: v => v.toFixed(1) + '%'
+        }
       },
       scales: {
-        x: { ticks: { color: '#8a7d63', font: { size: 11 } }, grid: { color: 'rgba(44,62,80,0.07)' } },
-        y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => v + '%' }, grid: { color: 'rgba(44,62,80,0.07)' } }
+        x: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => v + '%' }, grid: { color: 'rgba(44,62,80,0.07)' } },
+        y: { ticks: { color: '#8a7d63', font: { size: 11 } }, grid: { display: false } }
       }
     }
   });
@@ -1878,55 +1815,6 @@ function _renderCumplimientoCertificado(canvasId, prevChart, d2Filtrado, d7Filtr
       scales: {
         x: { ticks: { color: '#8a7d63', font: { size: 13 } }, grid: { display: false } },
         y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => v + '%' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true, suggestedMax: Math.max(sinSub, sinSobre, conSub, conSobre, 100) * 1.15 }
-      }
-    }
-  });
-}
-
-// Costo de la falta de certificación: Valor NO Capturado sumado por Sin vs Con certificado
-function _renderCostoCertificacion(canvasId, prevChart, d7Filtrado) {
-  const { modelosSinCert, modelosConCert } = _clasificarCertificado(d7Filtrado);
-  const setSin = new Set(modelosSinCert), setCon = new Set(modelosConCert);
-
-  let sinTotal = 0, conTotal = 0;
-  d7Filtrado.forEach(r => {
-    const modelo = r[C7.modelo];
-    const v = Math.abs(parsNum(r[C7.valorNoCapturado]));
-    if (setSin.has(modelo)) sinTotal += v;
-    else if (setCon.has(modelo)) conTotal += v;
-  });
-  const total = sinTotal + conTotal;
-
-  if (prevChart) prevChart.destroy();
-  return new Chart(document.getElementById(canvasId), {
-    type: 'bar',
-    data: {
-      labels: ['Sin Certificado', 'Con Certificado'],
-      datasets: [{ data: [sinTotal, conTotal], backgroundColor: ['rgba(232,115,74,0.9)','rgba(47,158,143,0.9)'], borderRadius: 6 }]
-    },
-    plugins: [ChartDataLabels],
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      layout: { padding: { top: 28 } },
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => {
-          const pct = total > 0 ? (ctx.parsed.y/total*100).toFixed(1) : 0;
-          return ` $ ${ctx.parsed.y.toLocaleString('es-AR', {maximumFractionDigits:0})} (${pct}%)`;
-        } } },
-        datalabels: {
-          anchor: 'end', align: 'top', offset: 4, clamp: true,
-          color: '#2c3e50', font: { size: 12, weight: '700' },
-          formatter: v => {
-            if (v <= 0) return '';
-            const pct = total > 0 ? (v/total*100).toFixed(1) : 0;
-            return '$ ' + (v/1000).toFixed(0) + 'k (' + pct + '%)';
-          }
-        }
-      },
-      scales: {
-        x: { ticks: { color: '#8a7d63', font: { size: 13 } }, grid: { display: false } },
-        y: { ticks: { color: '#8a7d63', font: { size: 11 }, callback: v => '$ ' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(44,62,80,0.07)' }, beginAtZero: true }
       }
     }
   });
@@ -1984,6 +1872,57 @@ function renderChartLineas8() {
   });
 }
 
+let chartRdoMensual8 = null;
+function renderRdoMensual8() {
+  // Filtra "Rdo mensual" por el mismo mes seleccionado en Monthly Estrategia, según su propia columna Fecha Oficialización
+  const mes8 = document.getElementById('filtroMes8').value;
+  let d = datosRdoMensual;
+  if (mes8) {
+    const [y, mo] = mes8.split('-').map(Number);
+    d = datosRdoMensual.filter(r => {
+      const f = parseFecha(r[C8.fechaOficializacion]);
+      return f && f.getFullYear() === y && f.getMonth()+1 === mo;
+    });
+  }
+
+  let sub = 0, sobre = 0;
+  d.forEach(r => {
+    const estr = (r[C8.estrategia]||'').trim().toLowerCase();
+    const v = Math.abs(parsNum(r[C8.rdoTotal]));
+    if (estr === 'sub') sub += v;
+    else if (estr === 'sobre') sobre += v;
+  });
+  const total = sub + sobre;
+
+  if (chartRdoMensual8) chartRdoMensual8.destroy();
+  chartRdoMensual8 = new Chart(document.getElementById('chartRdoMensual8'), {
+    type: 'doughnut',
+    data: {
+      labels: ['SUB', 'SOBRE'],
+      datasets: [{ data: [sub, sobre], backgroundColor: ['rgba(232,115,74,0.9)','rgba(47,158,143,0.9)'], borderColor: '#faf3e6', borderWidth: 3 }]
+    },
+    plugins: [ChartDataLabels],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'right', labels: { color: '#6b6152', font: { size: 12 }, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: ctx => {
+          const pct = total > 0 ? (ctx.parsed/total*100).toFixed(1) : 0;
+          return ` ${ctx.label}: $ ${ctx.parsed.toLocaleString('es-AR', {maximumFractionDigits:0})} (${pct}%)`;
+        } } },
+        datalabels: {
+          color: '#fff', font: { size: 13, weight: '700' },
+          formatter: (v, ctx) => {
+            const t = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+            return t ? Math.round(v/t*100) + '%' : '';
+          }
+        }
+      },
+      cutout: '55%'
+    }
+  });
+}
+
 function aplicarFiltros8() {
   const d = filtrarMes(datos2, C2.fechaMigracion, 'filtroMes8');
 
@@ -2003,25 +1942,8 @@ function aplicarFiltros8() {
   document.getElementById('k8-nocapturado').textContent = '$ ' + noCapturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
   renderChartLineas8();
-
-  const mes8 = document.getElementById('filtroMes8').value;
-  let d7mes = datos7;
-  if (mes8) {
-    const [y, mo] = mes8.split('-').map(Number);
-    d7mes = datos7.filter(r => {
-      const f = parseFecha(r[C7.fechaMigracion]);
-      return f && f.getFullYear() === y && f.getMonth()+1 === mo;
-    });
-  }
-  chartTendenciaDispersion8 = _renderTendenciaDispersion('chartTendenciaDispersion8', chartTendenciaDispersion8,
-    f => `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`,
-    c => { const [y,mo] = c.split('-'); const l = new Date(y,mo-1,1).toLocaleDateString('es-AR',{month:'short',year:'2-digit'}); return l.charAt(0).toUpperCase()+l.slice(1); });
-  chartCumplimientoCert8 = _renderCumplimientoCertificado('chartCumplimientoCert8', chartCumplimientoCert8, d, d7mes);
-  chartCostoCert8 = _renderCostoCertificacion('chartCostoCert8', chartCostoCert8, d7mes);
+  renderRdoMensual8();
 }
-let chartTendenciaDispersion8 = null;
-let chartCumplimientoCert8 = null;
-let chartCostoCert8 = null;
 
 // ─── TAB 3 ───
 function aplicarFiltros3() {
@@ -2620,7 +2542,7 @@ function actualizarTodo() {
   const btn = document.getElementById('btnActualizar');
   btn.classList.add('loading');
   let done = 0;
-  function check() { if (++done === 7) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
+  function check() { if (++done === 8) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
 
   Papa.parse(CSV1, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datos1 = r.data;
@@ -2676,6 +2598,12 @@ function actualizarTodo() {
     poblarSemanas7Combinado();
     aplicarFiltros7();
     aplicarFiltros8();
+    check();
+  }, error() { check(); } });
+
+  Papa.parse(CSV8, { download: true, header: true, skipEmptyLines: true, complete(r) {
+    datosRdoMensual = r.data;
+    renderRdoMensual8();
     check();
   }, error() { check(); } });
 }
