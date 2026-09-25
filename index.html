@@ -610,6 +610,26 @@
         <canvas id="chartLineas8"></canvas>
       </div>
     </div>
+    <!-- Cumplimiento Estrategia -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Cumplimiento Estrategia (Marca Propia)</div>
+      <div style="position:relative; height:280px;">
+        <canvas id="chartCumplimiento8"></canvas>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Cumplimiento Estrategia (Marca de Terceros)</div>
+      <div style="position:relative; height:280px;">
+        <canvas id="chartCumplimientoTerceros8"></canvas>
+      </div>
+    </div>
+    <!-- Dispersión de Precio del mes seleccionado -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Dispersión de Precio por Modelo — Mes Seleccionado (fuente: Accionables)</div>
+      <div style="position:relative; height:340px;">
+        <canvas id="chartDispersion8"></canvas>
+      </div>
+    </div>
     <!-- Rdo mensual: SUB vs SOBRE -->
     <div class="card">
       <div class="card-title">Rdo Estrategia Declaración TOTAL — SUB vs SOBRE (fuente: Rdo mensual)</div>
@@ -1874,14 +1894,21 @@ function renderChartLineas8() {
 
 let chartRdoMensual8 = null;
 function renderRdoMensual8() {
-  // Filtra "Rdo mensual" por el mismo mes seleccionado en Monthly Estrategia, según su propia columna Fecha Oficialización
+  // Solo considerar datos desde marzo 2026 en adelante
+  const desde = new Date(2026, 2, 1); // marzo = mes índice 2
+  let base = datosRdoMensual.filter(r => {
+    const f = parseFecha(r[C8.fechaOficializacion]);
+    return f && !isNaN(f) && f >= desde;
+  });
+
+  // Filtra por el mismo mes seleccionado en Monthly Estrategia, según su propia columna Fecha Oficialización
   const mes8 = document.getElementById('filtroMes8').value;
-  let d = datosRdoMensual;
+  let d = base;
   if (mes8) {
     const [y, mo] = mes8.split('-').map(Number);
-    d = datosRdoMensual.filter(r => {
+    d = base.filter(r => {
       const f = parseFecha(r[C8.fechaOficializacion]);
-      return f && f.getFullYear() === y && f.getMonth()+1 === mo;
+      return f.getFullYear() === y && f.getMonth()+1 === mo;
     });
   }
 
@@ -1943,7 +1970,24 @@ function aplicarFiltros8() {
 
   renderChartLineas8();
   renderRdoMensual8();
+
+  chartCumplimiento8 = _renderCumplimientoChart(d, 'propia', 'chartCumplimiento8', chartCumplimiento8);
+  chartCumplimientoTerceros8 = _renderCumplimientoChart(d, 'tercero', 'chartCumplimientoTerceros8', chartCumplimientoTerceros8);
+
+  const mes8 = document.getElementById('filtroMes8').value;
+  let d7mes = datos7;
+  if (mes8) {
+    const [y8, mo8] = mes8.split('-').map(Number);
+    d7mes = datos7.filter(r => {
+      const f = parseFecha(r[C7.fechaMigracion]);
+      return f && !isNaN(f) && f.getFullYear() === y8 && f.getMonth()+1 === mo8;
+    });
+  }
+  chartDispersion8 = _renderDispersionPeriodo('chartDispersion8', chartDispersion8, d7mes);
 }
+let chartCumplimiento8 = null;
+let chartCumplimientoTerceros8 = null;
+let chartDispersion8 = null;
 
 // ─── TAB 3 ───
 function aplicarFiltros3() {
