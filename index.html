@@ -631,11 +631,22 @@
       </div>
     </div>
     <!-- Rdo mensual: SUB vs SOBRE -->
-    <div class="card">
+    <div class="card" style="margin-bottom:24px;">
       <div class="card-title">Rdo Estrategia Declaración TOTAL — SUB vs SOBRE (fuente: Rdo mensual)</div>
       <div style="position:relative; height:320px; max-width:480px; margin:0 auto;">
         <canvas id="chartRdoMensual8"></canvas>
       </div>
+    </div>
+    <!-- Cuadro Marcas: mediana ponderada de cumplimiento -->
+    <div class="card">
+      <div class="card-title">Cumplimiento por Marca — Mediana Ponderada (fuente: Cuadro Marcas)</div>
+      <div class="table-wrap" style="max-height:480px; overflow-y:auto;">
+        <table>
+          <thead><tr><th>Marca</th><th>Mediana Ponderada SUB</th><th>Mediana Ponderada SOBRE</th></tr></thead>
+          <tbody id="tbodyCuadroMarcas8"></tbody>
+        </table>
+      </div>
+      <p class="conteo" id="conteoCuadroMarcas8"></p>
     </div>
   </div>
 
@@ -650,6 +661,7 @@ const CSV5 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk
 const CSV6 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7BE66Pz0dhw7di0F6Il3hNdocvtZM3HicuhjQtgo0Ep8DOdosePvqi7PMaJFNZZ/pub?gid=757044906&single=true&output=csv';
 const CSV7 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk7foMlo3TQCU-ry7I8/export?format=csv&gid=262098150'; // Accionables (spreadsheet "KPI prueba")
 const CSV8 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk7foMlo3TQCU-ry7I8/export?format=csv&gid=1376419654'; // Rdo mensual (spreadsheet "KPI prueba")
+const CSV9 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk7foMlo3TQCU-ry7I8/export?format=csv&gid=418202152'; // Cuadro Marcas (spreadsheet "KPI prueba")
 
 const ANALISTAS = ['Luciana', 'Florencia', 'Aymara'];
 const COLORES = {
@@ -676,8 +688,9 @@ const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Respons
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o Repetido', fobSIMI: 'FOB SIMI TOTAL C/Tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2', fechaMigracion: 'Fecha Migración', topeTeorico: 'Tope teorico' };
 const C7 = { so: 'SO', marca: 'Marca', modelo: 'Modelo', cert1: 'Certificado 1', cert2: 'Certificado 2', qty: 'Qty Importaciones', eta: 'ETA', estrategia: 'Estrategia', pctAplicado: '% Aplicado', tope: 'Tope teórico', dispSin: 'Dispersión de precio sin certificado', dispCon: 'Dispersión de precio con certificado', fechaMigracion: 'Fecha Migración', valorCapturado: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', valorNoCapturado: 'Valor no capturado' };
 const C8 = { modelo: 'Modelo', precioInvoice: 'Precio Invoice USD', fobSimiUnit: 'FOB SIMI Unitario', cantidad: 'Cantidad', pctDeclaracion: '% Declaracion', estrategia: 'Estrategia Declaracion', rdoEstrategia: 'Rdo Estrategia Declaracion', despacho: 'N° Despacho', fechaOficializacion: 'Fecha Oficialización', mesAno: 'MES / AÑO', fobInvoiceTotal: 'FOB Invoice Total', fobSimiTotal: 'FOB SIMI Total', rdoTotal: 'Rdo Estrategia Declaracion TOTAL', topeTeorico: 'Tope Teorico' };
+const C9 = { marca: 'Marcas', valorDeclarado: 'Valor declarado', fechaOficializacion: 'Fecha de oficializacion', totalConTope: 'Total con tope', rdoDeclaracion: 'Rdo de declaración', estrategia: 'Estrategia' };
 
-let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [], datos7 = [], datosRdoMensual = [];
+let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [], datos7 = [], datosRdoMensual = [], datosCuadroMarcas = [];
 let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTD4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null, chartSOA6 = null;
 
 function parseFecha(str) {
@@ -1950,6 +1963,59 @@ function renderRdoMensual8() {
   });
 }
 
+function medianaPonderada(pares) {
+  if (!pares.length) return null;
+  const ordenado = [...pares].sort((a,b) => a.valor - b.valor);
+  const total = ordenado.reduce((s,p) => s + p.peso, 0);
+  if (total <= 0) return null;
+  let acumulado = 0;
+  for (const p of ordenado) {
+    acumulado += p.peso;
+    if (acumulado >= total / 2) return p.valor;
+  }
+  return ordenado[ordenado.length - 1].valor;
+}
+
+function renderCuadroMarcas8() {
+  // Filtra por el mismo mes seleccionado en Monthly Estrategia, según Fecha de oficializacion
+  const mes8 = document.getElementById('filtroMes8').value;
+  let d = datosCuadroMarcas;
+  if (mes8) {
+    const [y, mo] = mes8.split('-').map(Number);
+    d = datosCuadroMarcas.filter(r => {
+      const f = parseFecha(r[C9.fechaOficializacion]);
+      return f && !isNaN(f) && f.getFullYear() === y && f.getMonth()+1 === mo;
+    });
+  }
+
+  const porMarca = {};
+  d.forEach(r => {
+    const marca = (r[C9.marca]||'').trim();
+    if (!marca) return;
+    const tope = parsNum(r[C9.totalConTope]);
+    const declarado = parsNum(r[C9.valorDeclarado]);
+    if (!tope) return;
+    const cumplimiento = declarado / tope * 100;
+    const estr = (r[C9.estrategia]||'').trim().toLowerCase();
+    if (estr !== 'sub' && estr !== 'sobre') return;
+    porMarca[marca] = porMarca[marca] || { sub: [], sobre: [] };
+    porMarca[marca][estr].push({ valor: cumplimiento, peso: declarado });
+  });
+
+  const marcas = Object.keys(porMarca).sort();
+  const tbody = document.getElementById('tbodyCuadroMarcas8');
+  if (tbody) {
+    tbody.innerHTML = marcas.length
+      ? marcas.map(m => {
+          const medSub = medianaPonderada(porMarca[m].sub);
+          const medSobre = medianaPonderada(porMarca[m].sobre);
+          return `<tr><td class="primary">${m}</td><td>${medSub !== null ? medSub.toFixed(1) + '%' : '—'}</td><td>${medSobre !== null ? medSobre.toFixed(1) + '%' : '—'}</td></tr>`;
+        }).join('')
+      : '<tr><td colspan="3" style="color:var(--text3);">Sin resultados</td></tr>';
+    document.getElementById('conteoCuadroMarcas8').textContent = `${marcas.length} marca${marcas.length!==1?'s':''}`;
+  }
+}
+
 function aplicarFiltros8() {
   const d = filtrarMes(datos2, C2.fechaMigracion, 'filtroMes8');
 
@@ -1970,6 +2036,7 @@ function aplicarFiltros8() {
 
   renderChartLineas8();
   renderRdoMensual8();
+  renderCuadroMarcas8();
 
   chartCumplimiento8 = _renderCumplimientoChart(d, 'propia', 'chartCumplimiento8', chartCumplimiento8);
   chartCumplimientoTerceros8 = _renderCumplimientoChart(d, 'tercero', 'chartCumplimientoTerceros8', chartCumplimientoTerceros8);
@@ -2586,7 +2653,7 @@ function actualizarTodo() {
   const btn = document.getElementById('btnActualizar');
   btn.classList.add('loading');
   let done = 0;
-  function check() { if (++done === 8) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
+  function check() { if (++done === 9) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
 
   Papa.parse(CSV1, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datos1 = r.data;
@@ -2648,6 +2715,12 @@ function actualizarTodo() {
   Papa.parse(CSV8, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datosRdoMensual = r.data;
     renderRdoMensual8();
+    check();
+  }, error() { check(); } });
+
+  Papa.parse(CSV9, { download: true, header: true, skipEmptyLines: true, complete(r) {
+    datosCuadroMarcas = r.data;
+    renderCuadroMarcas8();
     check();
   }, error() { check(); } });
 }
