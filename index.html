@@ -629,6 +629,7 @@
       <div style="position:relative; height:340px;">
         <canvas id="chartDispersion8"></canvas>
       </div>
+      <div id="comentarioDispersion8" style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border); font-size:13px; line-height:1.6; color:var(--text2);"></div>
     </div>
     <!-- Rdo mensual: SUB vs SOBRE -->
     <div class="card" style="margin-bottom:24px;">
@@ -687,7 +688,7 @@ const C4 = { embarque: 'Embarque ', destino: 'Destino', pasarImpo2: 'Pasar a imp
 const C3 = { fecha: 'Fecha de Pago', monto: 'Monto Pesos', responsable: 'Responsable', tipo: 'Tipo de Comprobante' };
 const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado: 'FOB asignado total (USD)', estrategia: 'Estrategia', pctAplicado: '% aplicado', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', eta: 'ETA', tipoMarca: 'Tipo de marca', nuevoRepetido: 'Nuevo o Repetido', fobSIMI: 'FOB SIMI TOTAL C/Tope', cantidad: 'Cantidad', difUSD: 'Diferencia USD', cert1: 'Certificado 1', cert2: 'Certificado 2', fechaMigracion: 'Fecha Migración', topeTeorico: 'Tope teorico' };
 const C7 = { so: 'SO', marca: 'Marca', modelo: 'Modelo', cert1: 'Certificado 1', cert2: 'Certificado 2', qty: 'Qty Importaciones', eta: 'ETA', estrategia: 'Estrategia', pctAplicado: '% Aplicado', tope: 'Tope teórico', dispSin: 'Dispersión de precio sin certificado', dispCon: 'Dispersión de precio con certificado', fechaMigracion: 'Fecha Migración', valorCapturado: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', valorNoCapturado: 'Valor no capturado' };
-const C8 = { modelo: 'Modelo', precioInvoice: 'Precio Invoice USD', fobSimiUnit: 'FOB SIMI Unitario', cantidad: 'Cantidad', pctDeclaracion: '% Declaracion', estrategia: 'Estrategia Declaracion', rdoEstrategia: 'Rdo Estrategia Declaracion', despacho: 'N° Despacho', fechaOficializacion: 'Fecha Oficialización', mesAno: 'MES / AÑO', fobInvoiceTotal: 'FOB Invoice Total', fobSimiTotal: 'FOB SIMI Total', rdoTotal: 'Rdo Estrategia Declaracion TOTAL', topeTeorico: 'Tope Teorico' };
+const C8 = { modelo: 'Modelo', precioInvoice: 'Precio Invoice USD', fobSimiUnit: 'FOB SIMI Unitario', cantidad: 'Cantidad', pctDeclaracion: '% Declaracion', estrategia: 'Estrategia Declaracion', rdoEstrategia: 'Rdo Estrategia Declaracion', despacho: 'N° Despacho', fechaOficializacion: 'Fecha Oficialización', mesAno: 'MES / AÑO', fobInvoiceTotal: 'FOB Invoice Total', fobSimiTotal: 'FOB SIMI Total', rdoTotal: 'Rdo Estrategia Declaracion TOTAL', topeTeorico: 'Tope Teorico', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', difUSD: 'Diferencia USD', valorNoCapturado: 'Valor no capturado' };
 const C9 = { marca: 'Marcas', valorDeclarado: 'Valor declarado', fechaOficializacion: 'Fecha de oficializacion', totalConTope: 'Total con tope', rdoDeclaracion: 'Rdo de declaración', estrategia: 'Estrategia' };
 
 let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [], datos7 = [], datosRdoMensual = [], datosCuadroMarcas = [];
@@ -1661,6 +1662,13 @@ function renderChartCertMP7(d, totalModelos) {
 
 let chartCumplimiento7 = null;
 let chartCumplimientoTerceros7 = null;
+// SUB: cumplo >100% cuando mi FOB (real) es MENOR que el tope (meta) -> meta / real.
+// SOBRE: cumplo >100% cuando mi FOB (real) supera el tope (meta) -> real / meta.
+function _pctCumplimiento(estrategia, meta, real) {
+  if (estrategia === 'sub') return real > 0 ? (meta / real * 100) : 0;
+  return meta > 0 ? (real / meta * 100) : 0;
+}
+
 function _renderCumplimientoChart(d, marcaFiltro, canvasId, prevChart) {
   const filtradas = d.filter(r => (r[C2.tipoMarca]||'').toLowerCase().includes(marcaFiltro));
 
@@ -1668,7 +1676,7 @@ function _renderCumplimientoChart(d, marcaFiltro, canvasId, prevChart) {
     const filas = filtradas.filter(r => (r[C2.estrategia]||'').trim().toLowerCase() === estrategiaNombre);
     const meta = filas.reduce((s,r) => s + parsNum(r[C2.fobSIMI]), 0);
     const real = filas.reduce((s,r) => s + parsNum(r[C2.fobAsignado]), 0);
-    const pct = meta > 0 ? (real / meta * 100) : 0;
+    const pct = _pctCumplimiento(estrategiaNombre, meta, real);
     return { pct, meta, real };
   };
 
@@ -1695,7 +1703,7 @@ function _renderCumplimientoChart(d, marcaFiltro, canvasId, prevChart) {
         tooltip: { callbacks: { label: ctx => {
           const info = ctx.dataIndex === 0 ? sub : sobre;
           return [
-            ` Cumplimiento: ${ctx.parsed.y.toFixed(1)}%`,
+            ` Cumplimiento: ${ctx.parsed.y.toFixed(1)}%  (${ctx.dataIndex === 0 ? 'SUB = Tope ÷ FOB asignado' : 'SOBRE = FOB asignado ÷ Tope'})`,
             ` FOB SIMI TOTAL C/Tope (meta): $ ${info.meta.toLocaleString('es-AR', {maximumFractionDigits:0})}`,
             ` FOB asignado total (real): $ ${info.real.toLocaleString('es-AR', {maximumFractionDigits:0})}`
           ];
@@ -1736,6 +1744,37 @@ function _clasificarCertificado(datos7Filtrado) {
 }
 
 // Dispersión de precio por modelo, solo del período seleccionado (semana o mes), no acumulado
+// Comentario dinámico: cómo se calculó y análisis del período seleccionado
+function _comentarioDispersion(d7Filtrado, etiquetaPeriodo) {
+  const porModelo = {};
+  d7Filtrado.forEach(r => {
+    const modelo = r[C7.modelo];
+    if (!modelo) return;
+    let val = null, tipo = null;
+    if (tieneValor(r[C7.dispSin])) { val = parsNum(r[C7.dispSin]); tipo = 'sin'; }
+    else if (tieneValor(r[C7.dispCon])) { val = parsNum(r[C7.dispCon]); tipo = 'con'; }
+    if (val === null || isNaN(val)) return;
+    if (!porModelo[modelo]) porModelo[modelo] = { vals: [], tipo, marca: r[C7.marca] || '—' };
+    porModelo[modelo].vals.push(val);
+  });
+  const lista = Object.entries(porModelo).map(([modelo, i]) => ({ modelo, marca: i.marca, tipo: i.tipo, valor: i.vals.reduce((a,b)=>a+b,0)/i.vals.length }))
+    .sort((a,b) => Math.abs(b.valor) - Math.abs(a.valor));
+
+  const calculo = `<p style="margin:0 0 8px;"><b style="color:var(--text);">Cómo se calculó:</b> se toman los modelos de la hoja Accionables cuya Fecha Migración cae en el período seleccionado y, para cada uno, su dispersión de precio (columna "sin certificado" o "con certificado", según cuál tenga valor). Si un modelo aparece en varias filas, se promedia. El gráfico ordena por dispersión absoluta (de mayor a menor) y muestra hasta 20 modelos; naranja = sin certificado, verde = con certificado.</p>`;
+
+  if (!lista.length) {
+    return calculo + `<p style="margin:0;"><b style="color:var(--text);">Análisis (${etiquetaPeriodo}):</b> no hay modelos con dispersión de precio registrada en este período.</p>`;
+  }
+  const n = lista.length;
+  const sin = lista.filter(x => x.tipo === 'sin').length, con = n - sin;
+  const promAbs = lista.reduce((s,x) => s + Math.abs(x.valor), 0) / n;
+  const neg = lista.filter(x => x.valor < 0).length, pos = n - neg;
+  const criticos = lista.filter(x => Math.abs(x.valor) >= 20).length;
+  const top = lista.slice(0, 3).map(x => `${x.modelo} (${x.valor.toFixed(1)}%)`).join(', ');
+  const analisis = `<p style="margin:0;"><b style="color:var(--text);">Análisis (${etiquetaPeriodo}):</b> ${n} modelo${n!==1?'s':''} con dispersión registrada, ${sin} sin certificado (${(sin/n*100).toFixed(0)}%) y ${con} con certificado (${(con/n*100).toFixed(0)}%). La dispersión absoluta promedio es de ${promAbs.toFixed(1)}%; ${neg} modelo${neg!==1?'s':''} con dispersión negativa y ${pos} con positiva, y ${criticos} con desvíos de 20% o más. Los mayores desvíos son: ${top}.</p>`;
+  return calculo + analisis;
+}
+
 function _renderDispersionPeriodo(canvasId, prevChart, d7Filtrado) {
   const porModelo = {};
   d7Filtrado.forEach(r => {
@@ -1813,7 +1852,7 @@ function _renderCumplimientoCertificado(canvasId, prevChart, d2Filtrado, d7Filtr
     const filas = rows.filter(r => (r[C2.estrategia]||'').trim().toLowerCase() === estrategiaNombre);
     const meta = filas.reduce((s,r) => s + parsNum(r[C2.fobSIMI]), 0);
     const real = filas.reduce((s,r) => s + parsNum(r[C2.fobAsignado]), 0);
-    return meta > 0 ? (real / meta * 100) : 0;
+    return _pctCumplimiento(estrategiaNombre, meta, real);
   };
 
   const filasSin = propia.filter(r => setSin.has(r[C2.modelo]));
@@ -1854,16 +1893,74 @@ function _renderCumplimientoCertificado(canvasId, prevChart, d2Filtrado, d7Filtr
 }
 
 // ─── TAB 8: MONTHLY ESTRATEGIA (mismas tarjetas y gráfico que TAB 7, pero filtrado por mes según Fecha Migración) ───
+// ─── RDO MENSUAL: resolución de columnas por nombre (tolerante a espacios/tildes/mayúsculas) ───
+function _normHeader(s) { return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toLowerCase(); }
+function normalizarC8() {
+  if (!datosRdoMensual.length) return;
+  const keys = Object.keys(datosRdoMensual[0]);
+  Object.keys(C8).forEach(k => {
+    const objetivo = _normHeader(C8[k]);
+    const real = keys.find(h => _normHeader(h) === objetivo);
+    if (real) C8[k] = real;
+  });
+}
+function c8Existe(clave) { return datosRdoMensual.length > 0 && Object.keys(datosRdoMensual[0]).includes(C8[clave]); }
+// Solo se consideran datos desde marzo 2026 en adelante
+function rdoMensualBase() {
+  const desde = new Date(2026, 2, 1);
+  return datosRdoMensual.filter(r => { const f = parseFecha(r[C8.fechaOficializacion]); return f && !isNaN(f) && f >= desde; });
+}
+function rdoMensualDelMes() {
+  const base = rdoMensualBase();
+  const mes = document.getElementById('filtroMes8').value;
+  if (!mes) return base;
+  const [y, mo] = mes.split('-').map(Number);
+  return base.filter(r => { const f = parseFecha(r[C8.fechaOficializacion]); return f.getFullYear() === y && f.getMonth()+1 === mo; });
+}
+function poblarMeses8() { poblarMeses(rdoMensualBase(), C8.fechaOficializacion, 'filtroMes8'); }
+// % como fracción: "20,00%" -> 0.2 ; "0,2" -> 0.2 ; "20" -> 0.2
+function parsePctFrac(v) {
+  const s = (v === undefined || v === null) ? '' : v.toString().trim();
+  if (s === '') return 0;
+  const n = parsNum(s);
+  if (s.includes('%')) return n / 100;
+  return Math.abs(n) > 1 ? n / 100 : n;
+}
+// Diferencia USD = (FOB SIMI con tope - FOB asignado unitario) x Cantidad  (misma lógica que el script de Resultado Importados)
+//   FOB SIMI con tope: Sub = Precio x (1 - Tope) | Sobre = Precio x (1 + Tope) | otra estrategia = Precio
+function difUSDFila8(r) {
+  if (c8Existe('difUSD')) return parsNum(r[C8.difUSD]);
+  const precio = parsNum(r[C8.precioInvoice]);
+  const tope = parsePctFrac(r[C8.topeTeorico]);
+  const estr = (r[C8.estrategia] || '').toString().trim().toLowerCase();
+  const asignadoUnit = parsNum(r[C8.fobSimiUnit]);
+  const cantidad = parsNum(r[C8.cantidad]);
+  if (estr === 'sobre') {
+    // SOBRE: positivo (Extra Mile) cuando lo asignado supera el techo (precio + tope) -> asignaste más de lo que correspondía
+    const techo = precio + precio * tope;
+    return (asignadoUnit - techo) * cantidad;
+  }
+  // SUB (u otra estrategia): positivo (Extra Mile) cuando lo asignado queda por debajo del piso (precio - tope)
+  const piso = precio - precio * tope;
+  return (piso - asignadoUnit) * cantidad;
+}
+function c8PuedeCalcularDif() { return c8Existe('difUSD') || (c8Existe('precioInvoice') && c8Existe('fobSimiUnit') && c8Existe('cantidad')); }
+
+// Valor capturado = suma de |Rdo Estrategia Declaración Total (USD)| (misma medida que Weekly)
+function capturadoFila8(r) {
+  return c8Existe('valorAbs') ? Math.abs(parsNum(r[C8.valorAbs])) : Math.abs(parsNum(r[C8.rdoTotal]));
+}
+
 let chartL8 = null;
 function renderChartLineas8() {
   const mesMap = {};
-  datos2.forEach(r => {
-    const f = parseFecha(r[C2.fechaMigracion]);
+  rdoMensualBase().forEach(r => {
+    const f = parseFecha(r[C8.fechaOficializacion]);
     if (!f || isNaN(f)) return;
     const key = `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}`;
     if (!mesMap[key]) mesMap[key] = { precio: 0, capturado: 0 };
-    mesMap[key].precio += parsNum(r[C2.precio]);
-    mesMap[key].capturado += parsNum(r[C2.valorAbs]);
+    mesMap[key].precio += parsNum(r[C8.fobInvoiceTotal]);
+    mesMap[key].capturado += capturadoFila8(r);
   });
   const meses = Object.keys(mesMap).sort();
   const labels = meses.map(m => {
@@ -1907,23 +2004,7 @@ function renderChartLineas8() {
 
 let chartRdoMensual8 = null;
 function renderRdoMensual8() {
-  // Solo considerar datos desde marzo 2026 en adelante
-  const desde = new Date(2026, 2, 1); // marzo = mes índice 2
-  let base = datosRdoMensual.filter(r => {
-    const f = parseFecha(r[C8.fechaOficializacion]);
-    return f && !isNaN(f) && f >= desde;
-  });
-
-  // Filtra por el mismo mes seleccionado en Monthly Estrategia, según su propia columna Fecha Oficialización
-  const mes8 = document.getElementById('filtroMes8').value;
-  let d = base;
-  if (mes8) {
-    const [y, mo] = mes8.split('-').map(Number);
-    d = base.filter(r => {
-      const f = parseFecha(r[C8.fechaOficializacion]);
-      return f.getFullYear() === y && f.getMonth()+1 === mo;
-    });
-  }
+  const d = rdoMensualDelMes();
 
   let sub = 0, sobre = 0;
   d.forEach(r => {
@@ -2017,22 +2098,25 @@ function renderCuadroMarcas8() {
 }
 
 function aplicarFiltros8() {
+  // Tarjetas: hoja Rdo mensual, filtradas por mes según Fecha Oficialización
+  const d8 = rdoMensualDelMes();
+  const fmt = v => '$ ' + v.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  document.getElementById('k8-precio').textContent = fmt(d8.reduce((s,r) => s + parsNum(r[C8.fobInvoiceTotal]), 0));
+  document.getElementById('k8-fobasignado').textContent = fmt(d8.reduce((s,r) => s + parsNum(r[C8.fobSimiTotal]), 0));
+  document.getElementById('k8-capturado').textContent = fmt(d8.reduce((s,r) => s + capturadoFila8(r), 0));
+
+  if (c8PuedeCalcularDif()) {
+    const difs = d8.map(difUSDFila8);
+    document.getElementById('k8-extramile').textContent = fmt(difs.reduce((s,v) => s + (v > 0 ? v : 0), 0));
+    document.getElementById('k8-nocapturado').textContent = fmt(difs.reduce((s,v) => s + (v < 0 ? Math.abs(v) : 0), 0));
+  } else {
+    document.getElementById('k8-extramile').textContent = '—';
+    document.getElementById('k8-nocapturado').textContent = '—';
+  }
+
+  // Cumplimiento Propia/Terceros: Resultado Importados, mismo mes seleccionado (Fecha Migración)
   const d = filtrarMes(datos2, C2.fechaMigracion, 'filtroMes8');
-
-  const precioTotal = d.reduce((s,r) => s + parsNum(r[C2.precio]), 0);
-  document.getElementById('k8-precio').textContent = '$ ' + precioTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
-
-  const fobAsignadoTotal = d.reduce((s,r) => s + parsNum(r[C2.fobAsignado]), 0);
-  document.getElementById('k8-fobasignado').textContent = '$ ' + fobAsignadoTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
-
-  const capturado = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
-  document.getElementById('k8-capturado').textContent = '$ ' + capturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
-
-  const extraMile = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v > 0 ? v : 0); }, 0);
-  document.getElementById('k8-extramile').textContent = '$ ' + extraMile.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
-
-  const noCapturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
-  document.getElementById('k8-nocapturado').textContent = '$ ' + noCapturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
   renderChartLineas8();
   renderRdoMensual8();
@@ -2051,6 +2135,9 @@ function aplicarFiltros8() {
     });
   }
   chartDispersion8 = _renderDispersionPeriodo('chartDispersion8', chartDispersion8, d7mes);
+  const selMes = document.getElementById('filtroMes8');
+  const etiqueta = selMes.options[selMes.selectedIndex] ? selMes.options[selMes.selectedIndex].text : 'período';
+  document.getElementById('comentarioDispersion8').innerHTML = _comentarioDispersion(d7mes, etiqueta);
 }
 let chartCumplimiento8 = null;
 let chartCumplimientoTerceros8 = null;
@@ -2668,7 +2755,6 @@ function actualizarTodo() {
     aplicarFiltros2();
     poblarSemanas7Combinado();
     aplicarFiltros7();
-    poblarMeses(datos2, C2.fechaMigracion, 'filtroMes8');
     aplicarFiltros8();
     check();
   }, error() { check(); } });
@@ -2714,7 +2800,9 @@ function actualizarTodo() {
 
   Papa.parse(CSV8, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datosRdoMensual = r.data;
-    renderRdoMensual8();
+    normalizarC8();
+    poblarMeses8();
+    aplicarFiltros8();
     check();
   }, error() { check(); } });
 
