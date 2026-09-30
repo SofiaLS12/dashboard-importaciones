@@ -625,7 +625,7 @@
     </div>
     <!-- Dispersión de Precio del mes seleccionado -->
     <div class="card" style="margin-bottom:24px;">
-      <div class="card-title">Dispersión de Precio por Modelo — Mes Seleccionado (fuente: Accionables)</div>
+      <div class="card-title">Dispersión de Precio por Modelo — Mes Seleccionado (fuente: Accionables mensual)</div>
       <div style="position:relative; height:340px;">
         <canvas id="chartDispersion8"></canvas>
       </div>
@@ -663,6 +663,7 @@ const CSV6 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQSJ_owY-7cSloXe7B
 const CSV7 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk7foMlo3TQCU-ry7I8/export?format=csv&gid=262098150'; // Accionables (spreadsheet "KPI prueba")
 const CSV8 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk7foMlo3TQCU-ry7I8/export?format=csv&gid=1376419654'; // Rdo mensual (spreadsheet "KPI prueba")
 const CSV9 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk7foMlo3TQCU-ry7I8/export?format=csv&gid=418202152'; // Cuadro Marcas (spreadsheet "KPI prueba")
+const CSV10 = 'https://docs.google.com/spreadsheets/d/19WiSfjrna1SSDp1sH-Z89HPXPk7foMlo3TQCU-ry7I8/export?format=csv&gid=1991071181'; // Accionables mensual (spreadsheet "KPI prueba")
 
 const ANALISTAS = ['Luciana', 'Florencia', 'Aymara'];
 const COLORES = {
@@ -690,8 +691,9 @@ const C2 = { modelo: 'Modelo', precio: 'Precio Invoice total (USD)', fobAsignado
 const C7 = { so: 'SO', marca: 'Marca', modelo: 'Modelo', cert1: 'Certificado 1', cert2: 'Certificado 2', qty: 'Qty Importaciones', eta: 'ETA', estrategia: 'Estrategia', pctAplicado: '% Aplicado', tope: 'Tope teórico', dispSin: 'Dispersión de precio sin certificado', dispCon: 'Dispersión de precio con certificado', fechaMigracion: 'Fecha Migración', valorCapturado: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', valorNoCapturado: 'Valor no capturado' };
 const C8 = { modelo: 'Modelo', precioInvoice: 'Precio Invoice USD', fobSimiUnit: 'FOB SIMI Unitario', cantidad: 'Cantidad', pctDeclaracion: '% Declaracion', estrategia: 'Estrategia Declaracion', rdoEstrategia: 'Rdo Estrategia Declaracion', despacho: 'N° Despacho', fechaOficializacion: 'Fecha Oficialización', mesAno: 'MES / AÑO', fobInvoiceTotal: 'FOB Invoice Total', fobSimiTotal: 'FOB SIMI Total', rdoTotal: 'Rdo Estrategia Declaracion TOTAL', topeTeorico: 'Tope Teorico', valorAbs: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', difUSD: 'Diferencia USD', valorNoCapturado: 'Valor no capturado' };
 const C9 = { marca: 'Marcas', valorDeclarado: 'Valor declarado', fechaOficializacion: 'Fecha de oficializacion', totalConTope: 'Total con tope', rdoDeclaracion: 'Rdo de declaración', estrategia: 'Estrategia' };
+const C10 = { so: 'SO', marca: 'Marca', modelo: 'Modelo', cert1: 'Certificado 1', cert2: 'Certificado 2', qty: 'Qty Importaciones', eta: 'ETA', estrategia: 'Estrategia', pctAplicado: '% Aplicado', tope: 'Tope teórico', dispSin: 'Dispersión de precio sin certificado', dispCon: 'Dispersión de precio con certificado', valorCapturado: 'Valor Absoluto - Rdo. Estrategia Declaracion Total (USD)', valorNoCapturado: 'Valor no capturado', fechaOficializacion: 'Fecha Oficialización' };
 
-let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [], datos7 = [], datosRdoMensual = [], datosCuadroMarcas = [];
+let datos1 = [], datos2 = [], datos3 = [], datos4 = [], datos5 = [], datos6 = [], datos7 = [], datosRdoMensual = [], datosCuadroMarcas = [], datosAccionablesMensual = [];
 let chartF = null, chartS = null, chartP3 = null, chartA3 = null, chartT4 = null, chartTD4 = null, chartTorta3 = [], chartB6 = null, chartP6 = null, chartSh6 = null, chartBD6 = null, chartFA6 = null, chartSOA6 = null;
 
 function parseFecha(str) {
@@ -708,6 +710,14 @@ function parsNum(str) {
   if (s.includes('.') && s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
   else if (s.includes(',')) s = s.replace(',', '.');
   return parseFloat(s) || 0;
+}
+
+// Diferencia USD con signo de negocio: en SOBRE la columna cruda (techo - asignado) viene invertida
+// respecto al criterio real (positivo = asigné más que el tope = Extra Mile), así que se invierte solo para SOBRE.
+function difUSDAjustado(r) {
+  const raw = parsNum(r[C2.difUSD]);
+  const estr = (r[C2.estrategia]||'').toString().trim().toLowerCase();
+  return estr === 'sobre' ? -raw : raw;
 }
 
 function poblarMeses(datos, colFecha, selectId) {
@@ -1127,11 +1137,11 @@ function aplicarFiltros2() {
   document.getElementById('k2-capturado').textContent = '$ ' + capturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
   // Extra Mile: suma Diferencia USD positivos
-  const extraMile = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v > 0 ? v : 0); }, 0);
+  const extraMile = d.reduce((s,r) => { const v = difUSDAjustado(r); return s + (v > 0 ? v : 0); }, 0);
   document.getElementById('k2-extramile').textContent = '$ ' + extraMile.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
   // Valor NO Capturado: suma valor absoluto de Diferencia USD negativos
-  const noCapturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
+  const noCapturado = d.reduce((s,r) => { const v = difUSDAjustado(r); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
   document.getElementById('k2-nocapturado').textContent = '$ ' + noCapturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
   // Total Modelos = Total Modelos MP + Marca de Terceros (calculado después de tener propia y terceros)
@@ -1174,7 +1184,7 @@ let chartL2b = null;
 function renderChartLineas2b(d) {
   // Mismas fórmulas que las tarjetas: Capturado = columna L (Valor Absoluto), No Capturado = abs(negativos de columna T)
   const capturado = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
-  const noCapturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
+  const noCapturado = d.reduce((s,r) => { const v = difUSDAjustado(r); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
   const esperado = capturado + noCapturado;
 
   const mes = document.getElementById('filtroMes2').value;
@@ -1368,7 +1378,7 @@ function renderChartCertMP(d) {
   d.forEach(r => {
     const modelo = r[C2.modelo];
     if (!modelo) return;
-    const v = parsNum(r[C2.difUSD]);
+    const v = difUSDAjustado(r);
     if (v >= 0) return; // solo no capturado (negativos)
     const abs = Math.abs(v);
     if (setSinCert.has(modelo)) valorNoCapSin += abs;
@@ -1467,10 +1477,10 @@ function aplicarFiltros7() {
   const capturado = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
   document.getElementById('k7-capturado').textContent = '$ ' + capturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
-  const extraMile = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v > 0 ? v : 0); }, 0);
+  const extraMile = d.reduce((s,r) => { const v = difUSDAjustado(r); return s + (v > 0 ? v : 0); }, 0);
   document.getElementById('k7-extramile').textContent = '$ ' + extraMile.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
-  const noCapturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
+  const noCapturado = d.reduce((s,r) => { const v = difUSDAjustado(r); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
   document.getElementById('k7-nocapturado').textContent = '$ ' + noCapturado.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
   const modelosMarcaMap = {};
@@ -1511,7 +1521,7 @@ let chartCumplimientoCert7 = null;
 let chartL7b = null;
 function renderChartLineas7b(d) {
   const capturado = d.reduce((s,r) => s + parsNum(r[C2.valorAbs]), 0);
-  const noCapturado = d.reduce((s,r) => { const v = parsNum(r[C2.difUSD]); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
+  const noCapturado = d.reduce((s,r) => { const v = difUSDAjustado(r); return s + (v < 0 ? Math.abs(v) : 0); }, 0);
   const esperado = capturado + noCapturado;
 
   const sem = document.getElementById('filtroSemana7').value;
@@ -1745,16 +1755,17 @@ function _clasificarCertificado(datos7Filtrado) {
 
 // Dispersión de precio por modelo, solo del período seleccionado (semana o mes), no acumulado
 // Comentario dinámico: cómo se calculó y análisis del período seleccionado
-function _comentarioDispersion(d7Filtrado, etiquetaPeriodo) {
+function _comentarioDispersion(d7Filtrado, etiquetaPeriodo, colMap) {
+  colMap = colMap || C7;
   const porModelo = {};
   d7Filtrado.forEach(r => {
-    const modelo = r[C7.modelo];
+    const modelo = r[colMap.modelo];
     if (!modelo) return;
     let val = null, tipo = null;
-    if (tieneValor(r[C7.dispSin])) { val = parsNum(r[C7.dispSin]); tipo = 'sin'; }
-    else if (tieneValor(r[C7.dispCon])) { val = parsNum(r[C7.dispCon]); tipo = 'con'; }
+    if (tieneValor(r[colMap.dispSin])) { val = parsNum(r[colMap.dispSin]); tipo = 'sin'; }
+    else if (tieneValor(r[colMap.dispCon])) { val = parsNum(r[colMap.dispCon]); tipo = 'con'; }
     if (val === null || isNaN(val)) return;
-    if (!porModelo[modelo]) porModelo[modelo] = { vals: [], tipo, marca: r[C7.marca] || '—' };
+    if (!porModelo[modelo]) porModelo[modelo] = { vals: [], tipo, marca: r[colMap.marca] || '—' };
     porModelo[modelo].vals.push(val);
   });
   const lista = Object.entries(porModelo).map(([modelo, i]) => ({ modelo, marca: i.marca, tipo: i.tipo, valor: i.vals.reduce((a,b)=>a+b,0)/i.vals.length }))
@@ -1775,16 +1786,17 @@ function _comentarioDispersion(d7Filtrado, etiquetaPeriodo) {
   return calculo + analisis;
 }
 
-function _renderDispersionPeriodo(canvasId, prevChart, d7Filtrado) {
+function _renderDispersionPeriodo(canvasId, prevChart, d7Filtrado, colMap) {
+  colMap = colMap || C7;
   const porModelo = {};
   d7Filtrado.forEach(r => {
-    const modelo = r[C7.modelo];
+    const modelo = r[colMap.modelo];
     if (!modelo) return;
     let val = null, tipo = null;
-    if (tieneValor(r[C7.dispSin])) { val = parsNum(r[C7.dispSin]); tipo = 'sin'; }
-    else if (tieneValor(r[C7.dispCon])) { val = parsNum(r[C7.dispCon]); tipo = 'con'; }
+    if (tieneValor(r[colMap.dispSin])) { val = parsNum(r[colMap.dispSin]); tipo = 'sin'; }
+    else if (tieneValor(r[colMap.dispCon])) { val = parsNum(r[colMap.dispCon]); tipo = 'con'; }
     if (val === null || isNaN(val)) return;
-    if (!porModelo[modelo]) porModelo[modelo] = { vals: [], tipo, marca: r[C7.marca] || '—' };
+    if (!porModelo[modelo]) porModelo[modelo] = { vals: [], tipo, marca: r[colMap.marca] || '—' };
     porModelo[modelo].vals.push(val);
   });
 
@@ -2125,19 +2137,20 @@ function aplicarFiltros8() {
   chartCumplimiento8 = _renderCumplimientoChart(d, 'propia', 'chartCumplimiento8', chartCumplimiento8);
   chartCumplimientoTerceros8 = _renderCumplimientoChart(d, 'tercero', 'chartCumplimientoTerceros8', chartCumplimientoTerceros8);
 
+  // Dispersión de Precio (Monthly): fuente "Accionables mensual", filtrado por su propia Fecha Oficialización
   const mes8 = document.getElementById('filtroMes8').value;
-  let d7mes = datos7;
+  let d10mes = datosAccionablesMensual;
   if (mes8) {
     const [y8, mo8] = mes8.split('-').map(Number);
-    d7mes = datos7.filter(r => {
-      const f = parseFecha(r[C7.fechaMigracion]);
+    d10mes = datosAccionablesMensual.filter(r => {
+      const f = parseFecha(r[C10.fechaOficializacion]);
       return f && !isNaN(f) && f.getFullYear() === y8 && f.getMonth()+1 === mo8;
     });
   }
-  chartDispersion8 = _renderDispersionPeriodo('chartDispersion8', chartDispersion8, d7mes);
+  chartDispersion8 = _renderDispersionPeriodo('chartDispersion8', chartDispersion8, d10mes, C10);
   const selMes = document.getElementById('filtroMes8');
   const etiqueta = selMes.options[selMes.selectedIndex] ? selMes.options[selMes.selectedIndex].text : 'período';
-  document.getElementById('comentarioDispersion8').innerHTML = _comentarioDispersion(d7mes, etiqueta);
+  document.getElementById('comentarioDispersion8').innerHTML = _comentarioDispersion(d10mes, etiqueta, C10);
 }
 let chartCumplimiento8 = null;
 let chartCumplimientoTerceros8 = null;
@@ -2740,7 +2753,7 @@ function actualizarTodo() {
   const btn = document.getElementById('btnActualizar');
   btn.classList.add('loading');
   let done = 0;
-  function check() { if (++done === 9) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
+  function check() { if (++done === 10) { btn.classList.remove('loading'); document.getElementById('lastUpdate').innerHTML = `<span class="dot"></span>Actualizado ${new Date().toLocaleTimeString('es-AR')}`; } }
 
   Papa.parse(CSV1, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datos1 = r.data;
@@ -2809,6 +2822,12 @@ function actualizarTodo() {
   Papa.parse(CSV9, { download: true, header: true, skipEmptyLines: true, complete(r) {
     datosCuadroMarcas = r.data;
     renderCuadroMarcas8();
+    check();
+  }, error() { check(); } });
+
+  Papa.parse(CSV10, { download: true, header: true, skipEmptyLines: true, complete(r) {
+    datosAccionablesMensual = r.data;
+    aplicarFiltros8();
     check();
   }, error() { check(); } });
 }
